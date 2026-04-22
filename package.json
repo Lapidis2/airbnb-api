@@ -1,0 +1,35 @@
+{
+  "name": "airbnb-api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "build ",
+    "dev": "nodemon --exec ts-node index.ts",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "module",
+    "url": "git+https://github.com/Lapidis2/airbnb-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Lapidis2/airbnb-api/issues"
+  },
+  "homepage": "https://github.com/Lapidis2/airbnb-api#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14",
+    "tsc": "^2.0.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
