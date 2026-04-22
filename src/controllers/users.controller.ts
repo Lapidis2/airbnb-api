@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
-import { users, type User } from "../models/users.model.js";
+import { users, type User } from "../models/users.model";
 
 export const getAllUsers = (_req: Request, res: Response): void => {
-  res.json(users);
+  res.status(200).json(users);
 };
 
 export const getUserById = (req: Request, res: Response): void => {

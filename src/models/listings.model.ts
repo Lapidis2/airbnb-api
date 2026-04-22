@@ -8,7 +8,7 @@ export interface Listing{
   guests: number;
   type: ListingTypes;
   amenities: string[];
-  rating?: number;
+  rating?: number|undefined;
   host: string;
 
 }
