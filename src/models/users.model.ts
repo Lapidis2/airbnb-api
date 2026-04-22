@@ -5,9 +5,9 @@ export interface User{
     email:string;
     phone:string;
     role:userRole;  
-    avatar:string;
+    avatar?:string;
     username:string;
-    bio:string;
+    bio?:string;
 
 }
 export const users:User[]=[
