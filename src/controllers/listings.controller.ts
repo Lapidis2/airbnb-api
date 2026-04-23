@@ -28,6 +28,44 @@ export const getAllListings = async (
   }
 };
 
+export const getSingleListing = async (req: Request, res: Response): Promise<void> => { 
+  try {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      res.status(400).json({
+        message: "Invalid listing ID",
+      });
+      return;
+    }
+
+    const listing = await prisma.listing.findUnique({
+      where: { id },
+      include: {
+        host: {
+          select: {
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    if (!listing) {
+      res.status(404).json({
+        message: "Listing not found",
+      });
+      return;
+    }
+
+    res.status(200).json(listing);
+  } catch (error) {
+    console.error("Get single listing error:", error);
+    res.status(500).json({
+      message: "Failed to fetch listing",
+    });
+  }
+}
 
 
 export const createListing = async (req: Request, res: Response): Promise<void> => {
