@@ -1,11 +1,10 @@
-# 🏠 Airbnb Listings API (TypeScript + Express)
+#  Airbnb Listings API (TypeScript + Express)
 
 A clean, modular REST API that simulates a simplified version of Airbnb.
 Built with **Node.js**, **Express**, and **TypeScript**, following an **MVC architecture** and best backend practices.
 
----
 
-## 🚀 Features
+##  Features
 
 * Full CRUD for **Users** and **Listings**
 * In-memory data (no database required)
@@ -14,9 +13,8 @@ Built with **Node.js**, **Express**, and **TypeScript**, following an **MVC arch
 * Proper HTTP status codes and error handling
 * Clean and scalable architecture
 
----
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 airbnb-api/
@@ -36,9 +34,9 @@ airbnb-api/
 └── .gitignore
 ```
 
----
 
-## ⚙️ Installation
+
+##  Installation
 
 ```bash
 # Clone the project
@@ -51,9 +49,9 @@ cd airbnb-api
 npm install
 ```
 
----
 
-## 🧪 Running the App
+
+##  Running the App
 
 ```bash
 # Development mode
@@ -74,9 +72,9 @@ http://localhost:3000
 
 ---
 
-## 📡 API Endpoints
+##  API Endpoints
 
-### 👤 Users
+###  Users
 
 | Method | Endpoint   | Description     |
 | ------ | ---------- | --------------- |
@@ -86,9 +84,8 @@ http://localhost:3000
 | PUT    | /users/:id | Update user     |
 | DELETE | /users/:id | Delete user     |
 
----
 
-### 🏡 Listings
+###  Listings
 
 | Method | Endpoint      | Description        |
 | ------ | ------------- | ------------------ |
@@ -100,7 +97,7 @@ http://localhost:3000
 
 ---
 
-## 📦 Data Models
+##  Data Models
 
 ### User
 
@@ -117,7 +114,6 @@ interface User {
 }
 ```
 
----
 
 ### Listing
 
@@ -136,9 +132,9 @@ interface Listing {
 }
 ```
 
----
 
-## 🧪 Example Requests
+
+##  Example Requests
 
 ### Create User
 
@@ -189,7 +185,7 @@ POST /listings
 
 ---
 
-## 🧠 Best Practices Used
+##  Best Practices Used
 
 * Separation of concerns (MVC pattern)
 * Typed request bodies using TypeScript
@@ -199,7 +195,7 @@ POST /listings
 
 ---
 
-## 🔧 Future Improvements
+##  Future Improvements
 
 * Add validation (Zod / Joi)
 * Connect to a real database (MongoDB / PostgreSQL)
@@ -209,7 +205,7 @@ POST /listings
 
 ---
 
-## 👨‍💻 Author
+##  Author
 
 Built as part of a backend learning project to master:
 
