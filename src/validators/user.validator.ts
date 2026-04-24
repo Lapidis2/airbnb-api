@@ -12,7 +12,7 @@ export const createUserSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters long').optional(),
 });
 
-const roleEnum = z.enum(["HOST", "GUEST"] as const, {
+const roleEnum = z.enum(["HOST", "GUEST","ADMIN"] as const, {
   message: "Role must be either HOST or GUEST",
 });
 

@@ -7,7 +7,7 @@ const route = Router();
 route.get("/", getAllListings);
 route.get("/:id", getSingleListing);
 route.post("/",authenticate,requireHost, createListing);
-route.put("/:id", updateListing);
-route.delete("/:id", deleteListing);
+route.put("/:id", authenticate,updateListing);
+route.delete("/:id", authenticate,deleteListing);
 
 export default route;

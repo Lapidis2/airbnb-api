@@ -118,30 +118,32 @@ export const createListing = async (
   }
 };
 
+
+
+
 export const updateListing = async (
-  req: Request,
-  res: Response,
+  req: AuthRequest,
+  res: Response
 ): Promise<void> => {
   try {
     const id = Number(req.params.id);
 
-    if (isNaN(id)) {
-      res.status(400).json({
-        message: "Invalid listing ID",
-      });
-      return;
-    }
-
-    const existingListing = await prisma.listing.findUnique({
+    const listing = await prisma.listing.findUnique({
       where: { id },
     });
 
-    if (!existingListing) {
-      res.status(404).json({
-        message: "Listing not found",
-      });
-      return;
+    if (!listing) {
+       res.status(404).json({ message: "Listing not found" });
+       return
     }
+
+    
+  if (listing.hostId !== req.userId && req.role !== "ADMIN") {
+  res.status(403).json({
+    message: "You can only edit your own listings",
+  });
+  return; 
+}
 
     const {
       title,
@@ -152,21 +154,7 @@ export const updateListing = async (
       type,
       amenities,
       rating,
-      hostId,
     } = req.body;
-
-    if (hostId) {
-      const host = await prisma.user.findUnique({
-        where: { id: Number(hostId) },
-      });
-
-      if (!host) {
-        res.status(404).json({
-          message: "Host not found",
-        });
-        return;
-      }
-    }
 
     const updatedListing = await prisma.listing.update({
       where: { id },
@@ -187,9 +175,7 @@ export const updateListing = async (
         ...(rating !== undefined && {
           rating: Number(rating),
         }),
-        ...(hostId && {
-          hostId: Number(hostId),
-        }),
+
       },
       include: {
         host: {
@@ -201,16 +187,18 @@ export const updateListing = async (
       },
     });
 
-    res
-      .status(200)
-      .json({ message: "Listing updated successfully", data: updatedListing });
+    res.status(200).json({
+      message: "Listing updated successfully",
+      data: updatedListing,
+    });
   } catch (error) {
     console.error("Update listing error:", error);
-    res.status(500).json({
-      message: "Failed to update listing",
-    });
+    res.status(500).json({ message: "Failed to update listing" });
   }
 };
+   
+
+     
 
 export const deleteListing = async (
   req: Request,
