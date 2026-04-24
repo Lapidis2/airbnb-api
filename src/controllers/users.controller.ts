@@ -35,36 +35,7 @@ export const getUserById = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 };
-export const createUser = async (req: Request, res: Response) => {
-  try {
-    const { name, email,username,role,phone } = req.body;
 
-    if (!name || !email || !username || !role || !phone) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const existingUser = await prisma.user.findUnique({ where: { email,username } });
-
-    if (existingUser) {
-      return res.status(400).json({ message: "User with this email or username already exists" });
-    }
-
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        username,
-        role,
-        phone
-      }
-    });
-
-    res.status(201).json(user);
-  } catch (error) {
-    console.log("Error: ", error);
-    res.status(500).json({ message: "Something went wrong" });
-  }
-}
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const userId = Number(req.params.id);
@@ -120,7 +91,6 @@ export const deleteUser = async (req: Request, res: Response) => {
 export default {
   getAllUsers,
   getUserById,
-  createUser,
   updateUser,
   deleteUser
 };

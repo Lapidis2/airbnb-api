@@ -1,8 +1,9 @@
 import prisma from "../../config/prismaConfig";
 import { Request, Response } from "express";
+import { AuthRequest } from "../middlewares/auth.middleware";
 export const getAllListings = async (
-  _req: Request,
-  res: Response
+  req: AuthRequest,
+  res: Response,
 ): Promise<void> => {
   try {
     const listings = await prisma.listing.findMany({
@@ -28,7 +29,10 @@ export const getAllListings = async (
   }
 };
 
-export const getSingleListing = async (req: Request, res: Response): Promise<void> => { 
+export const getSingleListing = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const id = Number(req.params.id);
 
@@ -65,10 +69,12 @@ export const getSingleListing = async (req: Request, res: Response): Promise<voi
       message: "Failed to fetch listing",
     });
   }
-}
+};
 
-
-export const createListing = async (req: Request, res: Response): Promise<void> => {
+export const createListing = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
   try {
     const {
       title,
@@ -78,24 +84,17 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
       guests,
       type,
       amenities,
-      hostId,
     } = req.body;
 
     
-    if (!title || !location || !pricePerNight || !guests || !type || !hostId) {
-      res.status(400).json({
-        message: "Missing required fields",
-      });
+    if (!title || !location || !pricePerNight || !guests || !type) {
+      res.status(400).json({ message: "Missing required fields" });
       return;
     }
 
     
-    const host = await prisma.user.findUnique({
-      where: { id: Number(hostId) },
-    });
-
-    if (!host) {
-      res.status(404).json({ message: "Host not found" });
+    if (!req.userId) {
+      res.status(401).json({ message: "Unauthorized" });
       return;
     }
 
@@ -108,20 +107,20 @@ export const createListing = async (req: Request, res: Response): Promise<void> 
         guests: Number(guests),
         type,
         amenities: amenities || [],
-        hostId: Number(hostId),
+        hostId: req.userId,
       },
     });
 
     res.status(201).json(listing);
   } catch (error) {
     console.log("Create listing error:", error);
-    res.status(500).json({ message: "Failed to create listing", error });
+    res.status(500).json({ message: "Failed to create listing" });
   }
 };
 
 export const updateListing = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const id = Number(req.params.id);
@@ -156,7 +155,6 @@ export const updateListing = async (
       hostId,
     } = req.body;
 
-   
     if (hostId) {
       const host = await prisma.user.findUnique({
         where: { id: Number(hostId) },
@@ -203,7 +201,9 @@ export const updateListing = async (
       },
     });
 
-    res.status(200).json({ message: "Listing updated successfully", data: updatedListing });
+    res
+      .status(200)
+      .json({ message: "Listing updated successfully", data: updatedListing });
   } catch (error) {
     console.error("Update listing error:", error);
     res.status(500).json({
@@ -212,8 +212,10 @@ export const updateListing = async (
   }
 };
 
-
-export const deleteListing = async (req: Request, res: Response): Promise<void> => {
+export const deleteListing = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const id = Number(req.params.id);
 
