@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import prisma from "../../config/prismaConfig";
 
 /**
  * CREATE BOOKING
@@ -110,6 +109,7 @@ export const getAllBookings = async (_req: Request, res: Response): Promise<void
 
     res.status(200).json(bookings);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Failed to fetch bookings" });
   }
 };
@@ -141,6 +141,7 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
 
     res.status(200).json(booking);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Failed to fetch booking" });
   }
 };

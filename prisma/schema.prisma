@@ -73,3 +73,6 @@ model Booking {
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId Int
 }
+
+
+
