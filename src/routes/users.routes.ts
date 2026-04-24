@@ -7,14 +7,14 @@ import {
   getUserById,
   updateUser,
 } from "../controllers/users.controller";
-import createUserSchema from "../validators/user.validator";
+  import {createUserSchema, updateUserSchema} from "../validators/user.validator";
 
 const route = Router();
 
 route.get("/", getAllUsers);
 route.get("/:id", getUserById);
 route.post("/", validate(createUserSchema), createUser);
-route.put("/:id", validate(createUserSchema), updateUser);
+route.put("/:id", validate(updateUserSchema), updateUser);
 route.delete("/:id", deleteUser);
 
 export default route;
