@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import  crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail";
+import { passwordResetEmail, welcomeEmail } from "../templates/email";
 
 const JWT_SECRET = process.env.JWT_SECRET || "hitayezurusecret";
 const JWT_EXPIRES_IN = "1h";
@@ -50,6 +51,15 @@ const existingUser = await prisma.user.findFirst({
  
 
   res.status(201).json(user);
+  try {
+  await sendEmail(
+    user.email,
+    "Welcome to Airbnb Clone",
+    welcomeEmail(user.name, user.role)
+  );
+} catch (err) {
+  console.log("Email failed but user created");
+}
   
  } catch (error) {
   console.error("Error during registration:", error);
@@ -161,30 +171,17 @@ export const forgotPassword = async (req: Request, res: Response) => {
   
   const resetLink = `http://localhost:3000/auth/reset-password/${rawToken}`;
 
-
+try {
   await sendEmail(
-    email,
-    "Reset Your Password",
-    `
-      <div style="font-family: Arial; background:#f4f4f4; padding:20px;">
-        <div style="max-width:500px; margin:auto; background:white; padding:20px; border-radius:10px;">
-          
-          <h2 style="color:#ff385c;">Reset Your Password</h2>
-
-          <p>You requested to reset your password.</p>
-
-          <a href="${resetLink}" 
-             style="display:inline-block; padding:12px 20px; background:#000; color:#fff; text-decoration:none; border-radius:6px;">
-            Reset Password
-          </a>
-
-          <p style="margin-top:20px; font-size:12px; color:gray;">
-            This link expires in 1 hour.
-          </p>
-        </div>
-      </div>
-    `
+    user.email,
+    "Reset Password",
+    passwordResetEmail(user.name, resetLink)
   );
+} catch (err) {
+  console.log("Reset email failed");
+}
+ 
+  
 
   return res.json({
     message: "If that email exists, reset link has been sent",
