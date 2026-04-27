@@ -56,3 +56,4 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
   if (req.role === "ADMIN") return next();
   return res.status(403).json({ message: "Admin only" });
 };
+

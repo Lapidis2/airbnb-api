@@ -4,13 +4,14 @@ import userRoutes from "./src/routes/users.routes";
 import listingRoutes from "./src/routes/listings.routes";
 import { connectDB } from "./config/prismaConfig";
 import bookingRoutes from "./src/routes/booking.routes";
+ import authRoutes from "./src/routes/auth.routes";
 const app = express();
 
 
 app.use(express.json());
 
-
 app.use("/users", userRoutes);
+app.use("/auth", authRoutes);
 app.use("/listings", listingRoutes);
 app.use("/bookings", bookingRoutes);
 
