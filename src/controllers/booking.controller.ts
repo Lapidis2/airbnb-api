@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 
 import prisma from "../../config/prismaConfig";
+import { bookingConfirmationEmail } from "../templates/email";
+import { sendEmail } from "../utils/sendEmail";
 
 /**
  * CREATE BOOKING
@@ -49,7 +51,6 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // prevent overlapping bookings
     const overlap = await prisma.booking.findFirst({
       where: {
         listingId: Number(listingId),
@@ -88,6 +89,32 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
     });
 
     res.status(201).json(booking);
+    
+try {
+  if (guest && listing) {
+    const formattedCheckIn = new Date(booking.checkIn).toDateString();
+    const formattedCheckOut = new Date(booking.checkOut).toDateString();
+
+    await sendEmail(
+      guest.email,
+      "Booking Confirmed 🎉",
+      bookingConfirmationEmail(
+        guest.name,
+        listing.title,
+        listing.location,
+        formattedCheckIn,
+        formattedCheckOut,
+        booking.totalPrice
+      )
+    );
+  }
+} catch (error) {
+  console.error("Booking email failed:", error);
+}
+
+
+
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to create booking" });

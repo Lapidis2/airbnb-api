@@ -25,7 +25,16 @@ enum BookingStatus {
   CONFIRMED
   CANCELLED
 }
+model ListingPhoto {
+  id         Int      @id @default(autoincrement())
+  url        String
+  publicId   String
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId Int
+}
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -56,6 +65,7 @@ model Listing {
   type          ListingType
   amenities     String[]
   rating        Float?
+  photos    ListingPhoto[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime? @updatedAt
 

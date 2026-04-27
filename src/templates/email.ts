@@ -11,7 +11,7 @@ export const welcomeEmail = (name: string, role: string) => {
         : "<p>Explore amazing listings around you 🌍</p>"
     }
 
-    <a href="http://localhost:3000"
+    <a href="https://jeanpierre-portfolio.netlify.app/"
        style="padding:10px 20px;background:#FF5A5F;color:white;text-decoration:none;border-radius:5px;">
       Get Started
     </a>

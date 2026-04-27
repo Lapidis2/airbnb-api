@@ -167,39 +167,7 @@ export const uploadListingPhotos = async (req: AuthRequest, res: Response) => {
       message: "Internal server error",
     });
   }
-};export const deleteListingPhoto = async (req: AuthRequest, res: Response) => {
-  try {
-    const photoId = Number(req.params.photoId);
-    const listingId = Number(req.params.id);
-
-    const photo = await prisma.listingPhoto.findUnique({
-      where: { id: photoId },
-      include: { listing: true },
-    });
-
-    if (!photo) {
-      return res.status(404).json({ message: "Photo not found" });
-    }
-
-    if (photo.listingId !== listingId) {
-      return res.status(400).json({ message: "Photo does not belong to this listing" });
-    }
-
-    if (photo.listing.hostId !== req.userId && req.role !== "ADMIN") {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-
-    await deleteFromCloudinary(photo.publicId);
-
-    await prisma.listingPhoto.delete({
-      where: { id: photoId },
-    });
-
-    return res.json({ message: "Photo deleted successfully" });
-  } catch (error) {
-    console.error("Delete listing photo error:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
 };
+
+
+

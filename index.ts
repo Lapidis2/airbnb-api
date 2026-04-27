@@ -13,6 +13,8 @@ app.use(express.json());
 
 app.use("/users", userRoutes);
 app.use("/users", uploadRoutes);
+app.use("/listings", uploadRoutes);
+app.use("/listings", uploadRoutes);
 app.use("/auth", authRoutes);
 app.use("/listings", listingRoutes);
 app.use("/bookings", bookingRoutes);

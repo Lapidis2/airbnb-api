@@ -169,7 +169,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   });
 
   
-  const resetLink = `http://localhost:3000/auth/reset-password/${rawToken}`;
+  const resetLink = `jeanpierre-portfolio.netlify.app/auth/reset-password/${rawToken}`;
 
 try {
   await sendEmail(
