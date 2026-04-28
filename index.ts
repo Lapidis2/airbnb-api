@@ -20,6 +20,9 @@ app.use("/auth", authRoutes);
 app.use("/bookings", bookingRoutes);
 
 const PORT = process.env.PORT || 5000;
+app.get("/", (_req, res) => {  
+  res.send("Welcome to the Airbnb API!");
+});
 
 const main = async () => {
   await connectDB();
