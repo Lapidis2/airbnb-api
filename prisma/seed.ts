@@ -8,7 +8,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 Starting seed...");
+  console.log("Starting seed...");
 
   // Clear existing data (idempotent seed)
   await prisma.booking.deleteMany();
@@ -214,7 +214,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error("❌ Seed error:", e);
+    console.error(" Seed error:", e);
     process.exit(1);
   })
   .finally(async () => {

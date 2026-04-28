@@ -2,11 +2,11 @@ import "dotenv/config";
 import express from "express";
 import userRoutes from "./src/routes/users.routes";
 import listingRoutes from "./src/routes/listings.routes";
-import { connectDB } from "./config/prismaConfig";
+import { connectDB } from "./src/config/prismaConfig";
 import bookingRoutes from "./src/routes/booking.routes";
  import authRoutes from "./src/routes/auth.routes";
  import uploadRoutes from "./src/routes/upload.routes";
-import { setupSwagger } from "./config/swagger";
+import { setupSwagger } from "./src/config/swagger";
 const app = express();
 
 app.use(express.json());

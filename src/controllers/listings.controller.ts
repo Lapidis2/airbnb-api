@@ -1,4 +1,4 @@
-import prisma from "../../config/prismaConfig";
+import prisma from "../config/prismaConfig";
 import { Request, Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware";
 export const getAllListings = async (

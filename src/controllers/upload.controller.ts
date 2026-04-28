@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import prisma from "../../config/prismaConfig";
+import prisma from "../config/prismaConfig";
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
