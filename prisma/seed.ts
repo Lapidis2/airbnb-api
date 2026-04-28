@@ -82,9 +82,9 @@ async function main() {
 
   console.log("✓ Users created");
 
-  // =====================
+  // ===================
   // 2. LISTINGS
-  // =====================
+  // ===================
   const apartment = await prisma.listing.create({
     data: {
       title: "Cozy Downtown Apartment",
