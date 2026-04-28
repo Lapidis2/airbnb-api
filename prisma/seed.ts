@@ -1,4 +1,5 @@
-import { PrismaClient, Role, ListingType, BookingStatus } from "@prisma/client";
+import { Role, ListingType, BookingStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client/extension";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import "dotenv/config";
