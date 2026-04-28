@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import { Request, Response } from "express";
 import userRoutes from "./src/routes/users.routes";
 import listingRoutes from "./src/routes/listings.routes";
 import { connectDB } from "./src/config/prismaConfig";
@@ -20,7 +21,7 @@ app.use("/auth", authRoutes);
 app.use("/bookings", bookingRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.get("/", (_req, res) => {  
+app.get("/", (_req: Request, res: Response) => {  
   res.send("Welcome to the Airbnb API!");
 });
 

@@ -6,6 +6,9 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export interface AuthRequest extends Request {
   userId?: number;
   role?: string;
+  body: any;
+  params: any;
+  files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
 }
 interface JwtPayload {
   userId: number;

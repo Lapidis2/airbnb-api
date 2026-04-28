@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { createListing, deleteListing, getAllListings, getSingleListing, updateListing } from "../controllers/listings.controller";
 import { authenticate, requireHost } from "../middlewares/auth.middleware";
 
@@ -169,7 +169,7 @@ route.get("/search", getAllListings);
  *                   type: object
  *                   example: { "APARTMENT": 25, "HOUSE": 15, "VILLA": 7, "CABIN": 3 }
  */
-route.get("/stats", (_req, res) => {
+route.get("/stats", (_req: Request, res: Response) => {
   res.json({ totalListings: 0, averagePrice: 0, byLocation: {}, byType: {} });
 });
 

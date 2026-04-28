@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { validate } from "../middlewares/validation";
 import { createUserSchema } from "../validators/user.validator";
 import { changePassword, resetPassword, forgotPassword, register, login } from "../controllers/auth.controller";
@@ -99,7 +99,7 @@ route.post("/login", login);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-route.get("/me", authenticate, (req, res) => {
+route.get("/me", authenticate, (req: Request, res: Response) => {
   const authReq = req as any;
   res.json(authReq.user);
 });
