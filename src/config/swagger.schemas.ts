@@ -142,6 +142,30 @@
  *         password:
  *           type: string
  *           example: securepassword123
+ *     ForgotPasswordInput:
+ *       type: object
+ *       required: [email]
+ *       properties:
+ *         email:
+ *           type: string
+ *           example: john@example.com
+ *     ResetPasswordInput:
+ *       type: object
+ *       required: [password]
+ *       properties:
+ *         password:
+ *           type: string
+ *           example: newpassword123
+ *     ChangePasswordInput:
+ *       type: object
+ *       required: [oldPassword, newPassword]
+ *       properties:
+ *         oldPassword:
+ *           type: string
+ *           example: currentpassword123
+ *         newPassword:
+ *           type: string
+ *           example: newpassword123
  *     CreateListingInput:
  *       type: object
  *       required: [title, description, location, pricePerNight, guests, type, amenities]
