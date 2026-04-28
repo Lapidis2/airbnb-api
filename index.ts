@@ -6,6 +6,7 @@ import { connectDB } from "./src/config/prismaConfig";
 import bookingRoutes from "./src/routes/booking.routes";
  import authRoutes from "./src/routes/auth.routes";
  import uploadRoutes from "./src/routes/upload.routes";
+import reviewRoutes from "./src/routes/reviews.routes";
 import { setupSwagger } from "./src/config/swagger";
 const app = express();
 
@@ -14,9 +15,8 @@ setupSwagger(app);
 app.use("/users", userRoutes);
 app.use("/users", uploadRoutes);
 app.use("/listings", listingRoutes);
-app.use("/listings", uploadRoutes);
+app.use("/listings", reviewRoutes);
 app.use("/auth", authRoutes);
-app.use("/listings", listingRoutes);
 app.use("/bookings", bookingRoutes);
 
 const PORT = process.env.PORT || 5000;

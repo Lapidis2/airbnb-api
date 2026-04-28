@@ -1,6 +1,7 @@
 import swaggerJSDoc from "swagger-jsdoc";
-import { Express } from "express";
 import swaggerUi from "swagger-ui-express";
+import type { Express, Request, Response } from "express";
+import path from "path";
 
 const options: swaggerJSDoc.Options = {
   definition: {
@@ -25,18 +26,23 @@ const options: swaggerJSDoc.Options = {
       },
     },
   },
-  apis: ["./src/routes/*.ts"],
+  apis: [
+    path.join(process.cwd(), "src/config/swagger.schemas.ts"),
+    path.join(process.cwd(), "src/routes/*.ts"),
+  ],
 };
 
-const swaggerSpec = swaggerJSDoc(options);
+const getSwaggerSpec = () => swaggerJSDoc(options);
 
-export const setupSwagger = (app: Express) => {
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-  app.get("/api-docs.json", (_req, res) => {
+export function setupSwagger(app: Express): void {
+  app.get("/api-docs.json", (_req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/json");
-    res.send(swaggerSpec);
+    res.send(getSwaggerSpec());
   });
 
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(undefined, {
+    swaggerUrl: "/api-docs.json",
+  }));
+
   console.log("Swagger docs available at http://localhost:5000/api-docs");
-};
+}

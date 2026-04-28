@@ -1,204 +1,8 @@
 import { Router } from "express";
-import { Response, Request } from "express";
 import { validate } from "../middlewares/validation";
 import { createUserSchema } from "../validators/user.validator";
-import { changePassword,resetPassword,forgotPassword, register, login } from "../controllers/auth.controller";
+import { changePassword, resetPassword, forgotPassword, register, login } from "../controllers/auth.controller";
 import { authenticate } from "../middlewares/auth.middleware";
-
-/**
- * @swagger
- * components:
- *   schemas:
- *
- *     User:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *           example: 1
- *         name:
- *           type: string
- *           example: Jean Pierre
- *         email:
- *           type: string
- *           example: jean@gmail.com
- *         username:
- *           type: string
- *           example: jp_dev
- *         phone:
- *           type: string
- *           example: "+250788000000"
- *         role:
- *           type: string
- *           enum: [HOST, GUEST, ADMIN]
- *           example: GUEST
- *         avatar:
- *           type: string
- *           nullable: true
- *           example: https://cdn.com/avatar.jpg
- *         avatarPublicId:
- *           type: string
- *           nullable: true
- *         bio:
- *           type: string
- *           nullable: true
- *         resetToken:
- *           type: string
- *           nullable: true
- *         resetTokenExpiry:
- *           type: string
- *           format: date-time
- *           nullable: true
- *         password:
- *           type: string
- *           example: hashedpassword
- *         updatedAt:
- *           type: string
- *           format: date-time
- *           nullable: true
- *         createdAt:
- *           type: string
- *           format: date-time
- *
- *     ListingPhoto:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         url:
- *           type: string
- *           example: https://cdn.com/photo.jpg
- *         publicId:
- *           type: string
- *         isPrimary:
- *           type: boolean
- *           example: false
- *         listingId:
- *           type: integer
- *         createdAt:
- *           type: string
- *           format: date-time
- *
- *     Listing:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         title:
- *           type: string
- *           example: Cozy Apartment in Kigali
- *         description:
- *           type: string
- *         location:
- *           type: string
- *           example: Kigali
- *         pricePerNight:
- *           type: number
- *           example: 50
- *         guests:
- *           type: integer
- *           example: 2
- *         type:
- *           type: string
- *           enum: [APARTMENT, HOUSE, VILLA, CABIN]
- *         amenities:
- *           type: array
- *           items:
- *             type: string
- *           example: ["wifi", "kitchen", "parking"]
- *         rating:
- *           type: number
- *           nullable: true
- *         photos:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/ListingPhoto'
- *         hostId:
- *           type: integer
- *         host:
- *           $ref: '#/components/schemas/User'
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- *           nullable: true
- *
- *     Booking:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         checkIn:
- *           type: string
- *           format: date-time
- *         checkOut:
- *           type: string
- *           format: date-time
- *         totalPrice:
- *           type: number
- *           example: 200
- *         status:
- *           type: string
- *           enum: [PENDING, CONFIRMED, CANCELLED]
- *         guestId:
- *           type: integer
- *         listingId:
- *           type: integer
- *         guest:
- *           $ref: '#/components/schemas/User'
- *         listing:
- *           $ref: '#/components/schemas/Listing'
- *         createdAt:
- *           type: string
- *           format: date-time
- *
- *     CreateListingInput:
- *       type: object
- *       required: [title, description, location, pricePerNight, guests, type, amenities]
- *       properties:
- *         title:
- *           type: string
- *         description:
- *           type: string
- *         location:
- *           type: string
- *         pricePerNight:
- *           type: number
- *         guests:
- *           type: integer
- *         type:
- *           type: string
- *           enum: [APARTMENT, HOUSE, VILLA, CABIN]
- *         amenities:
- *           type: array
- *           items:
- *             type: string
- *
- *     CreateBookingInput:
- *       type: object
- *       required: [listingId, guestId, checkIn, checkOut]
- *       properties:
- *         listingId:
- *           type: integer
- *         guestId:
- *           type: integer
- *         checkIn:
- *           type: string
- *           format: date-time
- *         checkOut:
- *           type: string
- *           format: date-time
- *
- *     ErrorResponse:
- *       type: object
- *       properties:
- *         error:
- *           type: string
- *           example: Resource not found
- */
-
 
 const route = Router();
 
@@ -206,8 +10,9 @@ const route = Router();
  * @swagger
  * /auth/register:
  *   post:
- *     summary: Create a new user
+ *     summary: Register a new user
  *     tags: [Auth]
+ *     description: Create a new user account. Email and username must be unique.
  *     requestBody:
  *       required: true
  *       content:
@@ -222,7 +27,17 @@ const route = Router();
  *             schema:
  *               $ref: '#/components/schemas/User'
  *       400:
- *         description: Missing required fields
+ *         description: Missing required fields or validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Email or username already in use
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 route.post("/register", validate(createUserSchema), register);
 
@@ -232,6 +47,7 @@ route.post("/register", validate(createUserSchema), register);
  *   post:
  *     summary: Login and receive a JWT token
  *     tags: [Auth]
+ *     description: Authenticate user and receive a JWT token for subsequent requests.
  *     requestBody:
  *       required: true
  *       content:
@@ -240,64 +56,108 @@ route.post("/register", validate(createUserSchema), register);
  *             $ref: '#/components/schemas/LoginInput'
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login successful - returns token and user data
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiJ9...
+ *               $ref: '#/components/schemas/AuthResponse'
  *       400:
  *         description: Missing email or password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
- *         description: Invalid credentials
+ *         description: Invalid email or password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 route.post("/login", login);
 
 /**
  * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current authenticated user
+ *     tags: [Auth]
+ *     description: Returns the profile of the currently authenticated user.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: No token provided or token is invalid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+route.get("/me", authenticate, (req, res) => {
+  const authReq = req as any;
+  res.json(authReq.user);
+});
+
+/**
+ * @swagger
  * /auth/forgot-password:
  *   post:
+ *     summary: Request password reset email
  *     tags: [Auth]
+ *     description: Send a password reset email to the specified email address. Returns 200 whether the email exists or not for security.
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
+ *             $ref: '#/components/schemas/ForgotPasswordInput'
  *     responses:
  *       200:
- *         description: Always returns success
+ *         description: If email exists, password reset email sent (same response for security)
+ *       400:
+ *         description: Missing email field
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-
 route.post("/forgot-password", forgotPassword);
 
 /**
  * @swagger
  * /auth/reset-password/{token}:
  *   post:
+ *     summary: Reset password with token
  *     tags: [Auth]
+ *     description: Reset password using the token sent in the forgot-password email.
  *     parameters:
  *       - in: path
  *         name: token
  *         required: true
  *         schema:
  *           type: string
+ *         description: Password reset token from email
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               password:
- *                 type: string
+ *             $ref: '#/components/schemas/ResetPasswordInput'
  *     responses:
  *       200:
+ *         description: Password reset successfully
  *       400:
+ *         description: Invalid or expired token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 route.post("/reset-password/:token", resetPassword);
 
@@ -305,27 +165,33 @@ route.post("/reset-password/:token", resetPassword);
  * @swagger
  * /auth/change-password:
  *   post:
+ *     summary: Change password (authenticated user)
  *     tags: [Auth]
+ *     description: Change password for the currently authenticated user. Requires current password verification.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               currentPassword:
- *                 type: string
- *               newPassword:
- *                 type: string
+ *             $ref: '#/components/schemas/ChangePasswordInput'
  *     responses:
  *       200:
- *         description: Password changed
+ *         description: Password changed successfully
  *       400:
+ *         description: Invalid request - missing fields or validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
+ *         description: Unauthorized or current password is incorrect
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-
-
-route.post("/change-password",authenticate, changePassword);
+route.post("/change-password", authenticate, changePassword);
 
 export default route;
