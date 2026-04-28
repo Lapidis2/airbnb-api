@@ -17,9 +17,9 @@ async function main() {
   await prisma.listing.deleteMany();
   await prisma.user.deleteMany();
 
-  // =====================
+  // ===================
   // 1. USERS
-  // =====================
+  // ===================
   const alice = await prisma.user.create({
     data: {
       name: "Alice Johnson",
