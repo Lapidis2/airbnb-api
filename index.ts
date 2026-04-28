@@ -6,14 +6,14 @@ import { connectDB } from "./config/prismaConfig";
 import bookingRoutes from "./src/routes/booking.routes";
  import authRoutes from "./src/routes/auth.routes";
  import uploadRoutes from "./src/routes/upload.routes";
+import { setupSwagger } from "./config/swagger";
 const app = express();
 
-
 app.use(express.json());
-
+setupSwagger(app);
 app.use("/users", userRoutes);
 app.use("/users", uploadRoutes);
-app.use("/listings", uploadRoutes);
+app.use("/listings", listingRoutes);
 app.use("/listings", uploadRoutes);
 app.use("/auth", authRoutes);
 app.use("/listings", listingRoutes);

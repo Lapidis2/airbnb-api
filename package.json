@@ -6,7 +6,11 @@
   "scripts": {
     "start": "build ",
     "dev": "nodemon --exec ts-node index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "prisma:seed": "tsx prisma/seed.ts"
+  },
+    "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "repository": {
     "url": "git+https://github.com/Lapidis2/airbnb-api.git"
@@ -30,6 +34,8 @@
     "nodemailer": "^8.0.6",
     "pg": "^8.20.0",
     "prisma": "^7.8.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "tsc": "^2.0.4",
     "zod": "^4.3.6"
   },
@@ -41,6 +47,8 @@
     "@types/node": "^25.6.0",
     "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.20.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",

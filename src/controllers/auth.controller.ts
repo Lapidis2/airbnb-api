@@ -13,7 +13,7 @@ const JWT_EXPIRES_IN = "1h";
 export const register = async (req: Request, res: Response) => {
  try {
    const { name, email, username, password, role, phone } = req.body;
-console.log(req.body);
+
   if (!name || !email || !username || !password || !phone) {
     return res.status(400).json({ message: "Missing fields" });
   }
@@ -50,7 +50,10 @@ const existingUser = await prisma.user.findFirst({
 
  
 
-  res.status(201).json(user);
+ 
+const { password:_, ...safeUser } = user;
+
+res.status(201).json(safeUser);
   try {
   await sendEmail(
     user.email,
