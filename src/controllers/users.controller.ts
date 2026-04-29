@@ -1,19 +1,63 @@
 import { Request, Response } from "express";
 import prisma from "../config/prismaConfig";
-export const getAllUsers = async (_req: Request, res: Response) => {
+import { Prisma, Role } from "@prisma/client";
+export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await prisma.user.findMany({
-      include: {
-        _count: {
-          select: { listings: true }
-        }
-      }
-    });
+  
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
 
-    res.json(users);
+ 
+    const search = req.query.search as string | undefined;
+    const role = req.query.role as Role | undefined;
+
+    const where: Prisma.UserWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (role) {
+      where.role = role;
+    }
+
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: "desc", 
+        },
+        include: {
+          _count: {
+            select: { listings: true },
+          },
+        },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+  
+    res.status(200).json({
+      data: users,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    console.log("Error: ", error);
-    res.status(500).json({ message: "Something went wrong" });
+    console.error("Error fetching users:", error);
+    res.status(500).json({
+      message: "Something went wrong",
+    });
   }
 };
 

@@ -53,6 +53,9 @@ model User {
 
   listings  Listing[]
   bookings  Booking[]
+  @@index([name])
+  @@index([role])
+  reviews Review[]
 }
 
 model Listing {
@@ -73,6 +76,11 @@ model Listing {
   hostId   Int
 
   bookings Booking[]
+  @@index([hostId])
+  @@index([location])
+  @@index([type])
+  @@index([pricePerNight])
+  reviews Review[]
 }
 
 model Booking {
@@ -88,7 +96,22 @@ model Booking {
 
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId Int
+  @@index([guestId])
+  @@index([listingId])
+  @@index([status])
 }
 
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String
+  userId    Int
+  listingId Int
+  user      User     @relation(fields: [userId], references: [id])
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  createdAt DateTime @default(now())
 
+  @@index([userId])
+  @@index([listingId])
+}
 
