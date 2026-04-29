@@ -1,221 +1,162 @@
-import { Role, ListingType, BookingStatus } from "@prisma/client";
-import { PrismaClient } from "@prisma/client/extension";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
 import "dotenv/config";
+import { Role, ListingType, BookingStatus } from "@prisma/client";
+import bcrypt from "bcrypt";
+import prisma from "../src/config/prismaConfig";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+// ─────────────────────────────────────────────
+//  USERS (FAST - no relations)
+// ─────────────────────────────────────────────
+async function seedUsers() {
+  const password = await bcrypt.hash("password123", 10);
 
+  const users = Array.from({ length: 10 }).map((_, i) => ({
+    name: `User ${i + 1}`,
+    email: `user${i + 1}@example.com`,
+    username: `user${i + 1}`,
+    phone: `+25078800000${i}`,
+    password,
+    role: (i < 4 ? Role.HOST : Role.GUEST) as Role,
+  }));
+
+  await prisma.user.createMany({ data: users });
+
+  return prisma.user.findMany();
+}
+
+// ─────────────────────────────────────────────
+//  LISTINGS (RELATION: host → user)
+// ─────────────────────────────────────────────
+async function seedListings(hosts: any[]) {
+  const listings = [];
+
+  for (let i = 0; i < 10; i++) {
+    const listing = await prisma.listing.create({
+      data: {
+        title: `Listing ${i + 1}`,
+        description: "Nice place in Kigali",
+        location: "Kigali, Rwanda",
+        pricePerNight: 50 + i * 10,
+        guests: 2,
+        type: ListingType.APARTMENT,
+        amenities: ["WiFi", "Kitchen"],
+        rating: 4,
+
+     
+        host: {
+          connect: { id: hosts[i % hosts.length].id },
+        },
+      },
+    });
+
+    listings.push(listing);
+  }
+
+  return listings;
+}
+
+// ─────────────────────────────────────────────
+//  LISTING PHOTOS (RELATION: listing)
+// ─────────────────────────────────────────────
+async function seedListingPhotos(listings: any[]) {
+  const photos = [];
+
+  for (const listing of listings) {
+    const photoCount = 2 + Math.floor(Math.random() * 2);
+    
+    for (let i = 0; i < photoCount; i++) {
+      const photo = await prisma.listingPhoto.create({
+        data: {
+          url: `https://picsum.photos/800/600?random=${listing.id}-${i}`,
+          publicId: `listing_${listing.id}_photo_${i}`,
+          isPrimary: i === 0,
+          listing: {
+            connect: { id: listing.id },
+          },
+        },
+      });
+
+      photos.push(photo);
+    }
+  }
+
+  return photos;
+}
+
+// ─────────────────────────────────────────────
+//  BOOKINGS (RELATIONS: guest + listing)
+// ─────────────────────────────────────────────
+async function seedBookings(users: any[], listings: any[]) {
+  const guests = users.filter((u) => u.role === "GUEST");
+
+  const bookings = [];
+
+  for (let i = 0; i < 10; i++) {
+    const checkIn = new Date();
+    checkIn.setDate(checkIn.getDate() + i * 2);
+
+    const checkOut = new Date(checkIn);
+    checkOut.setDate(checkOut.getDate() + 2);
+
+    const booking = await prisma.booking.create({
+      data: {
+        checkIn,
+        checkOut,
+        totalPrice: 100,
+        status: ([BookingStatus.CONFIRMED, BookingStatus.PENDING, BookingStatus.CANCELLED][i % 3]) as BookingStatus,
+
+        
+        guest: {
+          connect: { id: guests[i % guests.length].id },
+        },
+        listing: {
+          connect: { id: listings[i % listings.length].id },
+        },
+      },
+    });
+
+    bookings.push(booking);
+  }
+
+  return bookings;
+}
+
+
+
+// ─────────────────────────────────────────────
+//  MAIN (TRANSACTION)
+// ─────────────────────────────────────────────
 async function main() {
-  console.log("Starting seed...");
+  console.log(" Hybrid seeding...");
 
-  // Clear existing data (idempotent seed)
-  await prisma.booking.deleteMany();
+  //  Clean
   await prisma.listingPhoto.deleteMany();
+  await prisma.booking.deleteMany();
   await prisma.listing.deleteMany();
   await prisma.user.deleteMany();
 
-  // ===================
-  // 1. USERS
-  // ===================
-  const alice = await prisma.user.create({
-    data: {
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      username: "alicej",
-      phone: "+1234567890",
-      role: Role.HOST,
-      bio: "Host with beautiful properties",
-      password: "hashedpassword",
-    },
-  });
+  console.log(" Database cleared");
 
-  const bob = await prisma.user.create({
-    data: {
-      name: "Bob Smith",
-      email: "bob@example.com",
-      username: "bobsmith",
-      phone: "+1234567891",
-      role: Role.GUEST,
-      bio: "Travel enthusiast",
-      password: "hashedpassword",
-    },
-  });
+  //  Seed
+  const users = await seedUsers();
+  const hosts = users.filter((u) => u.role === "HOST");
 
-  const carol = await prisma.user.create({
-    data: {
-      name: "Carol Davis",
-      email: "carol@example.com",
-      username: "carold",
-      phone: "+1234567892",
-      role: Role.HOST,
-      bio: "Luxury villa owner",
-      password: "hashedpassword",
-    },
-  });
+  const listings = await seedListings(hosts);
+  const photos = await seedListingPhotos(listings);
+  const bookings = await seedBookings(users, listings);
 
-  const david = await prisma.user.create({
-    data: {
-      name: "David Wilson",
-      email: "david@example.com",
-      username: "davidw",
-      phone: "+1234567893",
-      role: Role.GUEST,
-      bio: "Adventure seeker",
-      password: "hashedpassword",
-    },
-  });
-
-  const emma = await prisma.user.create({
-    data: {
-      name: "Emma Thompson",
-      email: "emma@example.com",
-      username: "emmat",
-      phone: "+1234567894",
-      role: Role.GUEST,
-      bio: "Digital nomad",
-      password: "hashedpassword",
-    },
-  });
-
-  console.log("✓ Users created");
-
-  // ===================
-  // 2. LISTINGS
-  // ===================
-  const apartment = await prisma.listing.create({
-    data: {
-      title: "Cozy Downtown Apartment",
-      description: "Modern apartment in the heart of the city",
-      location: "New York, NY",
-      pricePerNight: 120,
-      guests: 2,
-      type: ListingType.APARTMENT,
-      amenities: ["WiFi", "Gym", "Parking"],
-      hostId: alice.id,
-    },
-  });
-
-  const cabin = await prisma.listing.create({
-    data: {
-      title: "Lakeside Cabin Retreat",
-      description: "Peaceful cabin by the lake",
-      location: "Lake Tahoe, CA",
-      pricePerNight: 180,
-      guests: 4,
-      type: ListingType.CABIN,
-      amenities: ["Fireplace", "Lake access"],
-      hostId: carol.id,
-    },
-  });
-
-  const beachHouse = await prisma.listing.create({
-    data: {
-      title: "Sunny Beach House",
-      description: "Walk to the beach",
-      location: "Miami, FL",
-      pricePerNight: 250,
-      guests: 6,
-      type: ListingType.HOUSE,
-      amenities: ["Pool", "Beach access"],
-      hostId: alice.id,
-    },
-  });
-
-  const villa = await prisma.listing.create({
-    data: {
-      title: "Luxury Villa with Pool",
-      description: "Infinity pool ocean view villa",
-      location: "Malibu, CA",
-      pricePerNight: 500,
-      guests: 8,
-      type: ListingType.VILLA,
-      amenities: ["Pool", "Ocean view"],
-      hostId: carol.id,
-    },
-  });
-
-  const mountainCabin = await prisma.listing.create({
-    data: {
-      title: "Mountain Getaway Cabin",
-      description: "Secluded mountain cabin",
-      location: "Aspen, CO",
-      pricePerNight: 220,
-      guests: 4,
-      type: ListingType.CABIN,
-      amenities: ["Hot tub", "Fireplace"],
-      hostId: alice.id,
-    },
-  });
-
-  console.log("✓ Listings created");
-
-  // =====================
-  // 3. BOOKINGS
-  // =====================
-  await prisma.booking.createMany({
-    data: [
-      {
-        checkIn: new Date("2026-05-15"),
-        checkOut: new Date("2026-05-20"),
-        totalPrice: 600,
-        status: BookingStatus.CONFIRMED,
-        guestId: bob.id,
-        listingId: apartment.id,
-      },
-      {
-        checkIn: new Date("2026-07-01"),
-        checkOut: new Date("2026-07-10"),
-        totalPrice: 1620,
-        status: BookingStatus.PENDING,
-        guestId: bob.id,
-        listingId: cabin.id,
-      },
-      {
-        checkIn: new Date("2026-06-20"),
-        checkOut: new Date("2026-06-25"),
-        totalPrice: 1250,
-        status: BookingStatus.CONFIRMED,
-        guestId: david.id,
-        listingId: beachHouse.id,
-      },
-      {
-        checkIn: new Date("2026-08-15"),
-        checkOut: new Date("2026-08-20"),
-        totalPrice: 2500,
-        status: BookingStatus.PENDING,
-        guestId: david.id,
-        listingId: villa.id,
-      },
-      {
-        checkIn: new Date("2026-09-10"),
-        checkOut: new Date("2026-09-15"),
-        totalPrice: 1100,
-        status: BookingStatus.CANCELLED,
-        guestId: david.id,
-        listingId: mountainCabin.id,
-      },
-      {
-        checkIn: new Date("2026-05-01"),
-        checkOut: new Date("2026-05-08"),
-        totalPrice: 840,
-        status: BookingStatus.CONFIRMED,
-        guestId: emma.id,
-        listingId: apartment.id,
-      },
-    ],
-  });
-
-  console.log("✓ Bookings created");
-
-  console.log("🎉 Database seeding completed!");
+  console.log(" Seed complete");
+  console.log(`Users: ${users.length}`);
+  console.log(`Listings: ${listings.length}`);
+  console.log(`Photos: ${photos.length}`);
+  console.log(`Bookings: ${bookings.length}`);
 }
 
+// ─────────────────────────────────────────────
+//  RUN
+// ─────────────────────────────────────────────
 main()
   .catch((e) => {
-    console.error(" Seed error:", e);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

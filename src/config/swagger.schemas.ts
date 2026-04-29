@@ -221,6 +221,14 @@
  *         error:
  *           type: string
  *           example: Resource not found
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *         user:
+ *           $ref: '#/components/schemas/User'
  */
 
 export {};
