@@ -1,6 +1,7 @@
 import prisma from "../config/prismaConfig";
 import { Request, Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import { Prisma } from "@prisma/client";
 export const getAllListings = async (
   req: AuthRequest,
   res: Response,
@@ -67,6 +68,119 @@ export const getSingleListing = async (
     console.error("Get single listing error:", error);
     res.status(500).json({
       message: "Failed to fetch listing",
+    });
+   }
+ };
+
+export const searchListings = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const {
+      location,
+      type,
+      minPrice,
+      maxPrice,
+      guests,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+
+    if (!Number.isInteger(pageNum) || pageNum < 1) {
+      res.status(400).json({ message: "Invalid page number" });
+      return;
+    }
+    if (!Number.isInteger(limitNum) || limitNum < 1 || limitNum > 100) {
+      res.status(400).json({ message: "Invalid limit" });
+      return;
+    }
+
+    const skip = (pageNum - 1) * limitNum;
+    const where: Prisma.ListingWhereInput = {};
+
+    const locationValue = Array.isArray(location) ? location[0] : location;
+    if (locationValue && typeof locationValue === "string" && locationValue.trim() !== "") {
+      where.location = {
+        contains: locationValue.trim(),
+        mode: "insensitive" as Prisma.QueryMode,
+      };
+    }
+
+    if (type && typeof type === "string") {
+      const validTypes = ["APARTMENT", "HOUSE", "VILLA", "CABIN"];
+      const normalizedType = type.toUpperCase();
+      if (!validTypes.includes(normalizedType)) {
+        res.status(400).json({ message: "Invalid listing type" });
+        return;
+      }
+      where.type = normalizedType as Prisma.EnumListingTypeFilter;
+    }
+
+    const priceFilter: Prisma.FloatFilter = {};
+    if (minPrice !== undefined) {
+      const min = Number(minPrice);
+      if (isNaN(min)) {
+        res.status(400).json({ message: "Invalid minPrice" });
+        return;
+      }
+      priceFilter.gte = min;
+    }
+    if (maxPrice !== undefined) {
+      const max = Number(maxPrice);
+      if (isNaN(max)) {
+        res.status(400).json({ message: "Invalid maxPrice" });
+        return;
+      }
+      priceFilter.lte = max;
+    }
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.pricePerNight = priceFilter;
+    }
+
+    if (guests !== undefined) {
+      const guestsNum = Number(guests);
+      if (isNaN(guestsNum) || guestsNum < 1) {
+        res.status(400).json({ message: "Invalid guests count" });
+        return;
+      }
+      where.guests = { gte: guestsNum };
+    }
+console.log("WHERE FILTER:", JSON.stringify(where, null, 2));
+    const [listings, total] = await Promise.all([
+      prisma.listing.findMany({
+        where,
+        skip,
+        take: limitNum,
+        include: {
+          host: {
+            select: {
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.listing.count({ where }),
+    ]);
+
+    res.status(200).json({
+      data: listings,
+      meta: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    console.error("Search listings error:", error);
+    res.status(500).json({
+      message: "Failed to search listings",
     });
   }
 };

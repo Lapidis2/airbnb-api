@@ -45,5 +45,5 @@ export function setupSwagger(app: Express): void {
     swaggerUrl: "/api-docs.json",
   }));
 
-  console.log("Swagger docs available at http://localhost:5000/api-docs");
+  console.log("Swagger docs available at https://airbnb-api-c4yx.onrender.com/api-docs");
 }

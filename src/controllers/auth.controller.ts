@@ -7,6 +7,11 @@ import { AuthRequest } from "../middlewares/auth.middleware";
 import  crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail";
 import { passwordResetEmail, welcomeEmail } from "../templates/email";
+import { clearCache } from "../config/cache";
+
+const clearUserStatsCache = (): void => {
+  clearCache("stats:users");
+};
 
 const JWT_SECRET = process.env.JWT_SECRET || "hitayezurusecret";
 const JWT_EXPIRES_IN = "1h";
@@ -37,21 +42,20 @@ const existingUser = await prisma.user.findFirst({
 
   const hashedpassword = await bcrypt.hash(password, 10);
 
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      username,
-      password: hashedpassword,
-      role: role === "HOST" ? "HOST" : "GUEST",
-      phone,
-    },
-  });
+   const user = await prisma.user.create({
+     data: {
+       name,
+       email,
+       username,
+       password: hashedpassword,
+       role: role === "HOST" ? "HOST" : "GUEST",
+       phone,
+     },
+   });
 
- 
+   clearUserStatsCache();
 
- 
-const { password:_, ...safeUser } = user;
+ const { password:_, ...safeUser } = user;
 
 res.status(201).json(safeUser);
   try {

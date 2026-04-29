@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { authenticate } from "../middlewares/auth.middleware";
+import { getListingReviews, createReview, deleteReview } from "../controllers/reviews.controller";
 
 const route = Router();
 
@@ -55,9 +56,7 @@ const route = Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-route.get("/:listingId/reviews", async (_req: Request, res: Response) => {
-  res.json({ data: [], meta: { page: 1, total: 0 } });
-});
+route.get("/:listingId/reviews", getListingReviews);
 
 /**
  * @swagger
@@ -107,9 +106,7 @@ route.get("/:listingId/reviews", async (_req: Request, res: Response) => {
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-route.post("/:listingId/reviews", authenticate, async (_req: Request, res: Response) => {
-  res.status(201).json({ id: 1, rating: 5, comment: "Great place!", userId: 1, listingId: 1, createdAt: new Date() });
-});
+route.post("/:listingId/reviews", authenticate, createReview);
 
 /**
  * @swagger
@@ -143,8 +140,6 @@ route.post("/:listingId/reviews", authenticate, async (_req: Request, res: Respo
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-route.delete("/:reviewId", authenticate, async (_req: Request, res: Response) => {
-  res.json({ message: "Review deleted" });
-});
+route.delete("/:reviewId", authenticate, deleteReview);
 
 export default route;

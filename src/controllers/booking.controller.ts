@@ -9,11 +9,19 @@ import { sendEmail } from "../utils/sendEmail";
  */
 export const createBooking = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { checkIn, checkOut, guestId, listingId } = req.body;
+    const { checkIn, checkOut, userId, listingId, guests: guestsCount } = req.body;
 
-    if (!checkIn || !checkOut || !guestId || !listingId) {
+    if (!checkIn || !checkOut || !userId || !listingId || guestsCount === undefined) {
       res.status(400).json({
-        message: "checkIn, checkOut, guestId, listingId required",
+        message: "checkIn, checkOut, userId, listingId, guests are required",
+      });
+      return;
+    }
+
+    const guestsNum = Number(guestsCount);
+    if (isNaN(guestsNum) || guestsNum < 1) {
+      res.status(400).json({
+        message: "Guests must be a positive number",
       });
       return;
     }
@@ -33,12 +41,12 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const guest = await prisma.user.findUnique({
-      where: { id: Number(guestId) },
+    const user = await prisma.user.findUnique({
+      where: { id: Number(userId) },
     });
 
-    if (!guest) {
-      res.status(404).json({ message: "Guest not found" });
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
       return;
     }
 
@@ -48,6 +56,13 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
 
     if (!listing) {
       res.status(404).json({ message: "Listing not found" });
+      return;
+    }
+
+    if (guestsNum > listing.guests) {
+      res.status(400).json({
+        message: `This listing only accommodates up to ${listing.guests} guests`,
+      });
       return;
     }
 
@@ -79,42 +94,38 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
         checkIn: checkInDate,
         checkOut: checkOutDate,
         totalPrice,
-        guestId: Number(guestId),
+        guestId: Number(userId),
         listingId: Number(listingId),
       },
       include: {
-        guest: { select: { id: true, name: true } },
-        listing: { select: { id: true, title: true } },
+        guest: { select: { id: true, name: true, email: true } },
+        listing: { select: { id: true, title: true, location: true } },
       },
     });
 
     res.status(201).json(booking);
-    
-try {
-  if (guest && listing) {
-    const formattedCheckIn = new Date(booking.checkIn).toDateString();
-    const formattedCheckOut = new Date(booking.checkOut).toDateString();
 
-    await sendEmail(
-      guest.email,
-      "Booking Confirmed 🎉",
-      bookingConfirmationEmail(
-        guest.name,
-        listing.title,
-        listing.location,
-        formattedCheckIn,
-        formattedCheckOut,
-        booking.totalPrice
-      )
-    );
-  }
-} catch (error) {
-  console.error("Booking email failed:", error);
-}
+    try {
+      if (user && listing) {
+        const formattedCheckIn = new Date(booking.checkIn).toDateString();
+        const formattedCheckOut = new Date(booking.checkOut).toDateString();
 
-
-
-
+        await sendEmail(
+          user.email,
+          "Booking Confirmed 🎉",
+          bookingConfirmationEmail(
+            user.name,
+            listing.title,
+            listing.location,
+            formattedCheckIn,
+            formattedCheckOut,
+            booking.totalPrice
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Booking email failed:", error);
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to create booking" });
@@ -124,17 +135,34 @@ try {
 /**
  * GET ALL BOOKINGS
  */
-export const getAllBookings = async (_req: Request, res: Response): Promise<void> => {
+export const getAllBookings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const bookings = await prisma.booking.findMany({
-      include: {
-        guest: { select: { id: true, name: true } },
-        listing: { select: { id: true, title: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    res.status(200).json(bookings);
+    const [bookings, total] = await Promise.all([
+      prisma.booking.findMany({
+        skip,
+        take: limit,
+        include: {
+          guest: { select: { id: true, name: true, email: true } },
+          listing: { select: { id: true, title: true, location: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.booking.count(),
+    ]);
+
+    res.status(200).json({
+      data: bookings,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch bookings" });

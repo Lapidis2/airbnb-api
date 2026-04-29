@@ -5,19 +5,18 @@ export const createBookingSchema = z
     checkIn: z.coerce.date({
       message: "checkIn must be a valid date",
     }),
-
     checkOut: z.coerce.date({
       message: "checkOut must be a valid date",
     }),
-
-    guestId: z.number().int().positive({
-      message: "guestId must be a positive integer",
+    userId: z.number().int().positive({
+      message: "userId must be a positive integer",
     }),
-
     listingId: z.number().int().positive({
       message: "listingId must be a positive integer",
     }),
-
+    guests: z.number().int().positive({
+      message: "guests must be a positive integer",
+    }),
     status: z.enum(["PENDING", "CONFIRMED", "CANCELLED"]).optional(),
   })
   .refine((data) => data.checkIn < data.checkOut, {
@@ -25,7 +24,7 @@ export const createBookingSchema = z
     path: ["checkOut"],
   });
 
-  export const updateBookingSchema = z
+export const updateBookingSchema = z
   .object({
     checkIn: z.coerce.date({
       message: "checkIn must be a valid date",

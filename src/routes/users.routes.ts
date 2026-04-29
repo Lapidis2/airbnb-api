@@ -5,14 +5,45 @@ import {
   getAllUsers,
   getUserById,
   updateUser,
+  getUserBookings,
 } from "../controllers/users.controller";
-  import { updateUserSchema} from "../validators/user.validator";
+import { updateUserSchema } from "../validators/user.validator";
 import { authenticate } from "../middlewares/auth.middleware";
-
-
-
+import { getUserStats } from "../controllers/stats.controller";
 
 const route = Router();
+
+/**
+ * @swagger
+ * /users/stats:
+ *   get:
+ *     tags: [Stats]
+ *     summary: Get users statistics
+ *     description: Retrieve aggregated statistics about users including total count and grouped counts by role.
+ *     responses:
+ *       200:
+ *         description: Users statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalUsers:
+ *                   type: integer
+ *                 byRole:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       role:
+ *                         type: string
+ *                       _count:
+ *                         type: object
+ *                         properties:
+ *                           role:
+ *                             type: integer
+ */
+route.get("/stats", getUserStats);
 
 /**
  * @swagger
@@ -93,6 +124,61 @@ route.get("/:id", getUserById);
 
 /**
  * @swagger
+ * /users/{id}/bookings:
+ *   get:
+ *     summary: Get all bookings for a specific user
+ *     description: Retrieve a paginated list of bookings for a specific user. Requires authentication.
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The user ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: User bookings retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Booking'
+ *                 meta:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+route.get("/:id/bookings", authenticate, getUserBookings);
+
+/**
+ * @swagger
  * /users/{id}:
  *   put:
  *     summary: Update user profile
@@ -140,6 +226,7 @@ route.get("/:id", getUserById);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 route.put("/:id", authenticate, validate(updateUserSchema), updateUser);
+
 /**
  * @swagger
  * /users/{id}:

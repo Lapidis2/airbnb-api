@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { createListing, deleteListing, getAllListings, getSingleListing, updateListing } from "../controllers/listings.controller";
+import { createListing, deleteListing, getAllListings, getSingleListing, searchListings, updateListing } from "../controllers/listings.controller";
 import { authenticate, requireHost } from "../middlewares/auth.middleware";
 
 const route = Router();
@@ -139,7 +139,7 @@ route.get("/", getAllListings);
  *                     total:
  *                       type: integer
  */
-route.get("/search", getAllListings);
+route.get("/search", searchListings);
 
 /**
  * @swagger
