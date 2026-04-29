@@ -20,7 +20,7 @@ const prisma = new PrismaClient({ adapter });
 
 export async function connectDB() {
   await prisma.$connect();
-  console.log(`Database connected successfully (${isDevelopment ? "local" : "Neon"})`);
+  console.log(`Database connected successfully. (${isDevelopment ? "local" : "Neon"})`);
 }
 
 export default prisma;
