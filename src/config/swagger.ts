@@ -29,7 +29,7 @@ servers: [
   },
   apis: [
     path.join(process.cwd(), "src/config/swagger.schemas.ts"),
-    path.join(process.cwd(), "src/routes/*.ts"),
+    path.join(process.cwd(), "src/routes/**/*.ts"),
   ],
 };
 

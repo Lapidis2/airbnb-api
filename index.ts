@@ -2,44 +2,69 @@ import "dotenv/config";
 import express, { NextFunction } from "express";
 import { Request, Response } from "express";
 import compression from "compression";
-import userRoutes from "./src/routes/users.routes";
-import listingRoutes from "./src/routes/listings.routes";
+import morgan from "morgan";
+import v1Router from "./src/routes/v1/index.js";
 import { connectDB } from "./src/config/prismaConfig";
-import bookingRoutes from "./src/routes/booking.routes";
-import authRoutes from "./src/routes/auth.routes";
-import uploadRoutes from "./src/routes/upload.routes";
-import reviewRoutes from "./src/routes/reviews.routes";
-import { setupSwagger } from "./src/config/swagger";
-import { generalLimiter, strictLimiter } from "./src/middlewares/rateLimiter";
+import { setupSwagger } from "./src/config/swagger.js";
 
 const app = express();
 
-app.use(compression());
+app.use(
+  process.env["NODE_ENV"] === "production"
+    ? morgan("combined")
+    : morgan("dev")
+);
 
+app.use(compression());
 app.use(express.json());
 
-app.use(generalLimiter);
+// Health check endpoint - no API versioning
+app.get("/health", (req: Request, res: Response) => {
+  res.json({ 
+    status: "ok", 
+    uptime: process.uptime(), 
+    timestamp: new Date(),
+    environment: process.env.NODE_ENV || "development"
+  });
+});
 
-const applyStrictToPost = (req: Request, res: Response, next: NextFunction) => {
-  if (req.method === "POST") {
-    return strictLimiter(req, res, next);
-  } else {
-    next();
-  }
-};
+// API v1 routes
+app.use("/api/v1", v1Router);
 
-app.use("/auth", applyStrictToPost, authRoutes);
-app.use("/listings", applyStrictToPost, listingRoutes);
-app.use("/listings", reviewRoutes);
-app.use("/bookings", applyStrictToPost, bookingRoutes);
-app.use("/users", userRoutes);
-app.use("/users", uploadRoutes);
-
+// Swagger/OpenAPI docs v1
 setupSwagger(app);
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env["PORT"]) || 3000;
+
+// Root endpoint
 app.get("/", (_req: Request, res: Response) => {
-  res.send("Welcome to the Airbnb API!");
+  res.json({
+    message: "Welcome to the Airbnb API",
+    version: "1.0.0",
+    endpoints: {
+      health: "/health",
+      apiV1: "/api/v1",
+      docs: "/api-docs"
+    }
+  });
+});
+
+// 404 handler - catch undefined routes
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ 
+    error: "Route not found",
+    path: req.originalUrl,
+    method: req.method
+  });
+});
+
+// Global error handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    error: "Something went wrong",
+    message: process.env.NODE_ENV === "production" ? undefined : err.message
+  });
 });
 
 const main = async () => {
@@ -47,6 +72,8 @@ const main = async () => {
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
   });
 };
 

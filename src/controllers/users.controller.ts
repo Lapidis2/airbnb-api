@@ -59,8 +59,10 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
 export const getUserById = async (req: Request, res: Response) => {
   try {
+    const id = req.params.id as string;
+
     const user = await prisma.user.findUnique({
-      where: { id: Number(req.params.id) },
+      where: { id },
       include: {
         listings: true,
         bookings: true,
@@ -78,10 +80,10 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const userId = Number(req.params.id);
+    const id = req.params.id as string;
 
     const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id },
     });
 
     if (!existingUser) {
@@ -89,7 +91,7 @@ export const updateUser = async (req: Request, res: Response) => {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id },
       data: {
         name: req.body.name ?? undefined,
         email: req.body.email ?? undefined,
@@ -110,10 +112,10 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const userId = Number(req.params.id);
+    const id = req.params.id as string;
 
     const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id },
     });
 
     if (!existingUser) {
@@ -121,7 +123,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     }
 
     await prisma.user.delete({
-      where: { id: userId },
+      where: { id },
     });
 
     clearUserStatsCache();
@@ -138,18 +140,10 @@ export const getUserBookings = async (
   res: Response
 ): Promise<void> => {
   try {
-    const userId = Number(req.params.id);
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    if (isNaN(userId)) {
-      res.status(400).json({ message: "Invalid user ID" });
-      return;
-    }
+    const id = req.params.id as string;
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id },
     });
 
     if (!user) {
@@ -157,9 +151,13 @@ export const getUserBookings = async (
       return;
     }
 
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const [bookings, total] = await Promise.all([
       prisma.booking.findMany({
-        where: { guestId: userId },
+        where: { guestId: id },
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -181,7 +179,7 @@ export const getUserBookings = async (
           },
         },
       }),
-      prisma.booking.count({ where: { guestId: userId } }),
+      prisma.booking.count({ where: { guestId: id } }),
     ]);
 
     res.status(200).json({

@@ -20,11 +20,11 @@ export const register = async (req: Request, res: Response) => {
    const { name, email, username, password, role, phone } = req.body;
 
   if (!name || !email || !username || !password || !phone) {
-    return res.status(400).json({ message: "Missing fields" });
+    return res.status(400).json({ message: "Missing required fields" });
   }
 
   if (password.length < 8) {
-    return res.status(400).json({ message: "Password too short" });
+    return res.status(400).json({ message: "Password must be at least 8 characters" });
   }
 
 const existingUser = await prisma.user.findFirst({
@@ -58,15 +58,18 @@ const existingUser = await prisma.user.findFirst({
  const { password:_, ...safeUser } = user;
 
 res.status(201).json(safeUser);
-  try {
-  await sendEmail(
-    user.email,
-    "Welcome to Airbnb Clone",
-    welcomeEmail(user.name, user.role)
-  );
-} catch (err) {
-  console.log("Email failed but user created");
-}
+
+  setImmediate(async () => {
+    try {
+      await sendEmail(
+        user.email,
+        "Welcome to Airbnb Clone",
+        welcomeEmail(user.name, user.role)
+      );
+    } catch (err) {
+      console.error("Welcome email failed:", err);
+    }
+  });
   
  } catch (error) {
   console.error("Error during registration:", error);
@@ -148,8 +151,11 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 export const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
 
+  const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
     return res.json({
@@ -157,38 +163,34 @@ export const forgotPassword = async (req: Request, res: Response) => {
     });
   }
 
-
   const rawToken = crypto.randomBytes(32).toString("hex");
-
 
   const hashedToken = crypto
     .createHash("sha256")
     .update(rawToken)
     .digest("hex");
 
- 
   await prisma.user.update({
     where: { email },
     data: {
       resetToken: hashedToken,
-      resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000),
     },
   });
 
-  
-  const resetLink = `jeanpierre-portfolio.netlify.app/auth/reset-password/${rawToken}`;
+  const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password/${rawToken}`;
 
-try {
-  await sendEmail(
-    user.email,
-    "Reset Password",
-    passwordResetEmail(user.name, resetLink)
-  );
-} catch (err) {
-  console.log("Reset email failed");
-}
- 
-  
+  setImmediate(async () => {
+    try {
+      await sendEmail(
+        user.email,
+        "Reset Password",
+        passwordResetEmail(user.name, resetLink)
+      );
+    } catch (err) {
+      console.error("Reset email failed:", err);
+    }
+  });
 
   return res.json({
     message: "If that email exists, reset link has been sent",

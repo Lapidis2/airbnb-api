@@ -8,7 +8,7 @@ import { AuthRequest } from "../middlewares/auth.middleware";
 
 export const uploadAvatar = async (req: Request, res: Response) => {
   try {
-    const userId = Number(req.params.id);
+    const userId = req.params.id as string;
 
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -54,7 +54,7 @@ export const uploadAvatar = async (req: Request, res: Response) => {
 
 export const deleteAvatar = async (req: Request, res: Response) => {
   try {
-    const userId = Number(req.params.id);
+    const userId = req.params.id as string;
 
    
     const user = await prisma.user.findUnique({
@@ -96,44 +96,42 @@ export const deleteAvatar = async (req: Request, res: Response) => {
 
 export const uploadListingPhotos = async (req: AuthRequest, res: Response) => {
   try {
-    const listingId = Number(req.params.id);
+    const listingId = req.params.id as string;
     console.log("[uploadListingPhotos] listingId:", listingId, "userId:", req.userId, "files count:", req.files ? (req.files as Express.Multer.File[]).length : 0);
 
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
-     const listing = await prisma.listing.findUnique({
-       where: { id: listingId },
-     });
-     console.log("[uploadListingPhotos] listing found:", listing ? listing.id : "NOT FOUND");
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+    });
+    console.log("[uploadListingPhotos] listing found:", listing ? listing.id : "NOT FOUND");
 
     if (!listing) {
       return res.status(404).json({ message: "Listing not found" });
     }
 
-     console.log("[uploadListingPhotos] ownership check - hostId:", listing.hostId, "userId:", req.userId);
-     if (listing.hostId !== req.userId) {
-       return res.status(403).json({ message: "Forbidden" });
-     }
+    console.log("[uploadListingPhotos] ownership check - hostId:", listing.hostId, "userId:", req.userId);
+    if (listing.hostId !== req.userId) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
-     const existingCount = await prisma.listingPhoto.count({
-       where: { listingId },
-     });
-     console.log("[uploadListingPhotos] existing photos:", existingCount);
+    const existingCount = await prisma.listingPhoto.count({
+      where: { listingId },
+    });
+    console.log("[uploadListingPhotos] existing photos:", existingCount);
 
-     if (existingCount >= 5) {
-       return res.status(400).json({
-         message: "Maximum of 5 photos allowed",
-       });
-     }
-
+    if (existingCount >= 5) {
+      return res.status(400).json({
+        message: "Maximum of 5 photos allowed",
+      });
+    }
 
     const remainingSlots = 5 - existingCount;
 
     const filesToUpload = (req.files as Express.Multer.File[]).slice(0, remainingSlots);
 
- 
     const uploadedPhotos = [];
 
     for (const file of filesToUpload) {
@@ -156,21 +154,22 @@ export const uploadListingPhotos = async (req: AuthRequest, res: Response) => {
       uploadedPhotos.push(photo);
     }
 
-     return res.json({
-       message: "Photos uploaded successfully",
-       photos: uploadedPhotos,
-     });
-     console.log("[uploadListingPhotos] response sent");
+    return res.json({
+      message: "Photos uploaded successfully",
+      photos: uploadedPhotos,
+    });
   } catch (error) {
     console.error("Upload listing photos error:", error);
     return res.status(500).json({
       message: "Internal server error",
     });
   }
-};export const deleteListingPhoto = async (req: AuthRequest, res: Response) => {
+};
+
+export const deleteListingPhoto = async (req: AuthRequest, res: Response) => {
   try {
-    const photoId = Number(req.params.photoId);
-    const listingId = Number(req.params.id);
+    const listingId = req.params.id as string;
+    const photoId = req.params.photoId as string;
 
     const photo = await prisma.listingPhoto.findUnique({
       where: { id: photoId },

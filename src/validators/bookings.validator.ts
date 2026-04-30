@@ -8,11 +8,11 @@ export const createBookingSchema = z
     checkOut: z.coerce.date({
       message: "checkOut must be a valid date",
     }),
-    userId: z.number().int().positive({
-      message: "userId must be a positive integer",
+    userId: z.string().uuid({
+      message: "userId must be a valid UUID",
     }),
-    listingId: z.number().int().positive({
-      message: "listingId must be a positive integer",
+    listingId: z.string().uuid({
+      message: "listingId must be a valid UUID",
     }),
     guests: z.number().int().positive({
       message: "guests must be a positive integer",

@@ -32,17 +32,10 @@ export const getAllListings = async (
 
 export const getSingleListing = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
-    const id = Number(req.params.id);
-
-    if (isNaN(id)) {
-      res.status(400).json({
-        message: "Invalid listing ID",
-      });
-      return;
-    }
+    const id = req.params.id as string;
 
     const listing = await prisma.listing.findUnique({
       where: { id },
@@ -69,8 +62,8 @@ export const getSingleListing = async (
     res.status(500).json({
       message: "Failed to fetch listing",
     });
-   }
- };
+  }
+};
 
 export const searchListings = async (
   req: Request,
@@ -122,7 +115,7 @@ export const searchListings = async (
 
     const priceFilter: Prisma.FloatFilter = {};
     if (minPrice !== undefined) {
-      const min = Number(minPrice);
+      const min = Number(minPrice as string);
       if (isNaN(min)) {
         res.status(400).json({ message: "Invalid minPrice" });
         return;
@@ -130,7 +123,7 @@ export const searchListings = async (
       priceFilter.gte = min;
     }
     if (maxPrice !== undefined) {
-      const max = Number(maxPrice);
+      const max = Number(maxPrice as string);
       if (isNaN(max)) {
         res.status(400).json({ message: "Invalid maxPrice" });
         return;
@@ -212,17 +205,17 @@ export const createListing = async (
       return;
     }
 
-    const listing = await prisma.listing.create({
-      data: {
-        title,
-        description,
-        location,
-        pricePerNight: Number(pricePerNight),
-        guests: Number(guests),
-        type,
-        amenities: amenities || [],
-        hostId: req.userId,
-      },
+     const listing = await prisma.listing.create({
+       data: {
+         title,
+         description,
+         location,
+         pricePerNight: Number(pricePerNight),
+         guests: Number(guests),
+         type,
+         amenities: amenities || [],
+         hostId: req.userId,
+       },
     });
 
     res.status(201).json(listing);
@@ -240,7 +233,7 @@ export const updateListing = async (
   res: Response
 ): Promise<void> => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id as string;
 
     const listing = await prisma.listing.findUnique({
       where: { id },
@@ -250,14 +243,13 @@ export const updateListing = async (
        res.status(404).json({ message: "Listing not found" });
        return
     }
-
     
-  if (listing.hostId !== req.userId && req.role !== "ADMIN") {
-  res.status(403).json({
-    message: "You can only edit your own listings",
-  });
-  return; 
-}
+   if (listing.hostId !== req.userId && req.role !== "ADMIN") {
+   res.status(403).json({
+     message: "You can only edit your own listings",
+   });
+   return; 
+ }
 
     const {
       title,
@@ -319,7 +311,7 @@ export const deleteListing = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id as string;
 
     const existingListing = await prisma.listing.findFirst({
       where: { id },

@@ -4,14 +4,14 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export interface AuthRequest extends Request {
-  userId?: number;
+  userId?: string;
   role?: string;
   body: any;
   params: any;
   files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] } | undefined;
 }
 interface JwtPayload {
-  userId: number;
+  userId: string;
   role: string;
 }
 

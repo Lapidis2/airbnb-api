@@ -16,15 +16,10 @@ export const getListingReviews = async (
   res: Response
 ): Promise<void> => {
   try {
-    const listingId = Number(req.params.listingId);
+    const listingId = req.params.listingId as string;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-
-    if (isNaN(listingId)) {
-      res.status(400).json({ message: "Invalid listing ID" });
-      return;
-    }
 
     const cacheKey = `${REVIEWS_CACHE_KEY(listingId)}:page:${page}:limit:${limit}`;
     const cached = getCache(cacheKey);
@@ -90,7 +85,7 @@ export const createReview = async (
 ): Promise<void> => {
   try {
     const { rating, comment } = req.body;
-    const listingId = Number(req.params.listingId);
+    const listingId = req.params.listingId as string;
     const userId = req.userId;
 
     if (!rating || !comment) {
@@ -100,6 +95,11 @@ export const createReview = async (
 
     if (rating < 1 || rating > 5) {
       res.status(400).json({ message: "Rating must be between 1 and 5" });
+      return;
+    }
+
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized" });
       return;
     }
 
@@ -115,11 +115,10 @@ export const createReview = async (
     const existingBooking = await prisma.booking.findFirst({
       where: {
         listingId,
-        guestId: userId as number,
+        guestId: userId,
         status: "CONFIRMED",
       },
     });
-
     if (!existingBooking) {
       res.status(400).json({
         message: "You must have a confirmed booking to leave a review",
@@ -131,7 +130,7 @@ export const createReview = async (
       data: {
         rating: Number(rating),
         comment,
-        userId: userId as number,
+        userId: userId,
         listingId,
       },
       include: {
@@ -152,7 +151,7 @@ export const createReview = async (
       _avg: { rating: true },
     });
 
-    if (averageRating._avg.rating) {
+    if (averageRating._avg.rating !== null && averageRating._avg.rating !== undefined) {
       await prisma.listing.update({
         where: { id: listingId },
         data: { rating: averageRating._avg.rating },
@@ -175,17 +174,11 @@ export const deleteReview = async (
   res: Response
 ): Promise<void> => {
   try {
-    const id = Number(req.params.id);
-
-    if (isNaN(id)) {
-      res.status(400).json({ message: "Invalid review ID" });
-      return;
-    }
+    const id = req.params.id as string;
 
     const review = await prisma.review.findUnique({
       where: { id },
     });
-
     if (!review) {
       res.status(404).json({ message: "Review not found" });
       return;
@@ -202,7 +195,7 @@ export const deleteReview = async (
       _avg: { rating: true },
     });
 
-    if (averageRating._avg.rating) {
+    if (averageRating._avg.rating !== null && averageRating._avg.rating !== undefined) {
       await prisma.listing.update({
         where: { id: review.listingId },
         data: { rating: averageRating._avg.rating },

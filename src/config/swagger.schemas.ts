@@ -6,8 +6,9 @@
  *       type: object
  *       properties:
  *         id:
- *           type: integer
- *           example: 1
+ *           type: string
+ *           format: uuid
+ *           example: "a3f8c2d1-4b5e-4f6a-8c9d-1e2f3a4b5c6d"
  *         name:
  *           type: string
  *           example: Jean Pierre
@@ -40,14 +41,16 @@
  *       type: object
  *       properties:
  *         id:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         url:
  *           type: string
  *           example: https://cdn.com/photo.jpg
  *         isPrimary:
  *           type: boolean
  *         listingId:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -55,7 +58,9 @@
  *       type: object
  *       properties:
  *         id:
- *           type: integer
+ *           type: string
+ *           format: uuid
+ *           example: "a3f8c2d1-4b5e-4f6a-8c9d-1e2f3a4b5c6d"
  *         title:
  *           type: string
  *           example: Cozy Apartment in Kigali
@@ -81,7 +86,8 @@
  *           type: number
  *           nullable: true
  *         hostId:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -89,7 +95,9 @@
  *       type: object
  *       properties:
  *         id:
- *           type: integer
+ *           type: string
+ *           format: uuid
+ *           example: "a3f8c2d1-4b5e-4f6a-8c9d-1e2f3a4b5c6d"
  *         checkIn:
  *           type: string
  *           format: date-time
@@ -103,9 +111,11 @@
  *           type: string
  *           enum: [PENDING, CONFIRMED, CANCELLED]
  *         guestId:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         listingId:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -192,9 +202,11 @@
  *       required: [listingId, guestId, checkIn, checkOut]
  *       properties:
  *         listingId:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         guestId:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         checkIn:
  *           type: string
  *           format: date-time

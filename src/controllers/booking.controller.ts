@@ -4,9 +4,6 @@ import prisma from "../config/prismaConfig";
 import { bookingConfirmationEmail } from "../templates/email";
 import { sendEmail } from "../utils/sendEmail";
 
-/**
- * CREATE BOOKING
- */
 export const createBooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const { checkIn, checkOut, userId, listingId, guests: guestsCount } = req.body;
@@ -41,18 +38,20 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: Number(userId) },
-    });
+    const [user, listing] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.listing.findUnique({ where: { id: listingId } }),
+    ]);
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    const listing = await prisma.listing.findUnique({
-      where: { id: Number(listingId) },
-    });
+    if (!listing) {
+      res.status(404).json({ message: "Listing not found" });
+      return;
+    }
 
     if (!listing) {
       res.status(404).json({ message: "Listing not found" });
@@ -68,7 +67,8 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
 
     const overlap = await prisma.booking.findFirst({
       where: {
-        listingId: Number(listingId),
+        listingId,
+        status: { not: "CANCELLED" },
         AND: [
           { checkIn: { lt: checkOutDate } },
           { checkOut: { gt: checkInDate } },
@@ -94,8 +94,8 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
         checkIn: checkInDate,
         checkOut: checkOutDate,
         totalPrice,
-        guestId: Number(userId),
-        listingId: Number(listingId),
+        guestId: userId,
+        listingId,
       },
       include: {
         guest: { select: { id: true, name: true, email: true } },
@@ -105,27 +105,29 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
 
     res.status(201).json(booking);
 
-    try {
-      if (user && listing) {
-        const formattedCheckIn = new Date(booking.checkIn).toDateString();
-        const formattedCheckOut = new Date(booking.checkOut).toDateString();
+    setImmediate(async () => {
+      try {
+        if (user && listing) {
+          const formattedCheckIn = new Date(booking.checkIn).toDateString();
+          const formattedCheckOut = new Date(booking.checkOut).toDateString();
 
-        await sendEmail(
-          user.email,
-          "Booking Confirmed 🎉",
-          bookingConfirmationEmail(
-            user.name,
-            listing.title,
-            listing.location,
-            formattedCheckIn,
-            formattedCheckOut,
-            booking.totalPrice
-          )
-        );
+          await sendEmail(
+            user.email,
+            "Booking Confirmed 🎉",
+            bookingConfirmationEmail(
+              user.name,
+              listing.title,
+              listing.location,
+              formattedCheckIn,
+              formattedCheckOut,
+              booking.totalPrice
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Booking email failed:", error);
       }
-    } catch (error) {
-      console.error("Booking email failed:", error);
-    }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to create booking" });
@@ -174,12 +176,7 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
  */
 export const getBookingById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = Number(req.params.id);
-
-    if (isNaN(id)) {
-      res.status(400).json({ message: "Invalid booking ID" });
-      return;
-    }
+    const id = req.params.id as string;
 
     const booking = await prisma.booking.findUnique({
       where: { id },
@@ -206,12 +203,7 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
  */
 export const updateBooking = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = Number(req.params.id);
-
-    if (isNaN(id)) {
-      res.status(400).json({ message: "Invalid booking ID" });
-      return;
-    }
+    const id = req.params.id as string;
 
     const existing = await prisma.booking.findUnique({
       where: { id },
@@ -272,12 +264,7 @@ export const updateBooking = async (req: Request, res: Response): Promise<void> 
  */
 export const deleteBooking = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = Number(req.params.id);
-
-    if (isNaN(id)) {
-      res.status(400).json({ message: "Invalid booking ID" });
-      return;
-    }
+    const id = req.params.id as string;
 
     const existing = await prisma.booking.findUnique({
       where: { id },
@@ -297,5 +284,63 @@ export const deleteBooking = async (req: Request, res: Response): Promise<void> 
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete booking" });
+  }
+}
+
+export const getUserBookings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.id as string;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const [bookings, total] = await Promise.all([
+      prisma.booking.findMany({
+        where: { guestId: userId },
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          guest: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          listing: {
+            select: {
+              id: true,
+              title: true,
+              location: true,
+              pricePerNight: true,
+            },
+          },
+        },
+      }),
+      prisma.booking.count({ where: { guestId: userId } }),
+    ]);
+
+    res.status(200).json({
+      data: bookings,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Get user bookings error:", error);
+    res.status(500).json({ message: "Failed to fetch user bookings" });
   }
 };
