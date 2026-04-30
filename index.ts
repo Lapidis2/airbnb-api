@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import compression from "compression";
 import morgan from "morgan";
 import v1Router from "./src/routes/v1/index.js";
+import v2UserRouter from "./src/routes/v2/user.routes.js";
 import { connectDB } from "./src/config/prismaConfig";
 import { setupSwagger } from "./src/config/swagger.js";
 
@@ -31,6 +32,9 @@ app.get("/health", (req: Request, res: Response) => {
 // API v1 routes
 app.use("/api/v1", v1Router);
 
+// API v2 routes (users module)
+app.use("/api/v2/users", v2UserRouter);
+
 // Swagger/OpenAPI docs v1
 setupSwagger(app);
 
@@ -44,6 +48,7 @@ app.get("/", (_req: Request, res: Response) => {
     endpoints: {
       health: "/health",
       apiV1: "/api/v1",
+      apiV2: "/api/v2/users",
       docs: "/api-docs"
     }
   });
