@@ -5,6 +5,7 @@ import compression from "compression";
 import morgan from "morgan";
 import v1Router from "./src/routes/v1/index.js";
 import v2UserRouter from "./src/routes/v2/user.routes.js";
+import uploadRouter from "./src/routes/v1/upload.routes.js";
 import { connectDB } from "./src/config/prismaConfig";
 import { setupSwagger } from "./src/config/swagger.js";
 
@@ -37,6 +38,8 @@ app.use("/api/v1", v1Router);
 
 
 app.use("/api/v2/users", v2UserRouter);
+
+app.use("/users", uploadRouter);
 
 
 setupSwagger(app);
