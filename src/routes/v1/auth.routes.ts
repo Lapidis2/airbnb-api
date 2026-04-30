@@ -103,7 +103,7 @@ route.post("/forgot-password", forgotPassword as any);
  *     responses:
  *       200:
  *         description: Password reset successful
- *         400:
+ *       400:
  *         description: Invalid token or other error
  */
 route.post("/reset-password", resetPassword as any);
