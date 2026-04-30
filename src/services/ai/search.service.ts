@@ -90,7 +90,7 @@ export const searchListingsWithAI = async (
   const allNull = !filters.location && !filters.type && !filters.maxPrice && !filters.guests;
 
   if (allNull) {
-    const error = new Error("Could not extract any filters from your query, please be more specific");
+    const error = new Error("Could not extract any filters from your query. Please include details like location, property type, price, or number of guests.");
     (error as any).statusCode = 400;
     throw error;
   }

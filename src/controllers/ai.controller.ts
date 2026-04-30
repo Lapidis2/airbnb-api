@@ -17,13 +17,24 @@ export const aiSearch = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if AI service is configured
+    if (!process.env.GROQ_API_KEY) {
+      res.status(503).json({
+        message: "AI service is not configured. Please check your GROQ_API_KEY environment variable."
+      });
+      return;
+    }
+
     const result = await searchListingsWithAI(query, page, limit);
     res.status(200).json(result);
   } catch (error: any) {
     console.error("AI Search error:", error);
-    // Return 429 (Too Many Requests) for AI service unavailable
-    res.status(429).json({
-      message: "AI service is temporarily unavailable due to model deprecation. Please use regular search endpoints.",
+    const statusCode = error.statusCode || 500;
+    const message = statusCode === 400
+      ? "Could not extract filters from your query. Please be more specific with location, type, price, or guest count."
+      : "AI service is temporarily unavailable. Please use regular search endpoints.";
+    res.status(statusCode).json({
+      message,
       details: process.env.NODE_ENV === "development" ? error.message : undefined
     });
   }
