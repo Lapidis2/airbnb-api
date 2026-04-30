@@ -40,7 +40,7 @@ airbnb-api/
 
 ```bash
 # Clone the project
-git clone <your-repo-url>
+git clone https://github.com/Lapidis2/airbnb-api,
 
 # Navigate into project
 cd airbnb-api
