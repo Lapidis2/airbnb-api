@@ -54,13 +54,13 @@ route.post(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/LoginInput'
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/LoginResponse'
+  *     responses:
+  *       200:
+  *         description: Login successful
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: '#/components/schemas/AuthResponse'
  *       401:
  *         description: Invalid credentials
  */
