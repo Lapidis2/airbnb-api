@@ -41,6 +41,7 @@
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
     "compression": "^1.8.1",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.4.1",
@@ -57,6 +58,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0"

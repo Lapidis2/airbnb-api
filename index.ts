@@ -8,12 +8,16 @@ import v2UserRouter from "./src/routes/v2/user.routes.js";
 import uploadRouter from "./src/routes/v1/upload.routes.js";
 import { connectDB } from "./src/config/prismaConfig";
 import { setupSwagger } from "./src/config/swagger.js";
-
+import cors from "cors";
 const app = express();
-app.use((req, res, next) => {
-  console.log("🌍 GLOBAL HIT:", req.method, req.url);
-  next();
-});
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://airbnb-api-c4yx.onrender.com",
+    ],
+  })
+);
 app.use(
   process.env["NODE_ENV"] === "production"
     ? morgan("combined")
