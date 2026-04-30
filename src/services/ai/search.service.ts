@@ -32,6 +32,10 @@ export interface ListingWithHost extends Prisma.ListingGetPayload<{
 }> {}
 
 export const extractFilters = async (query: string): Promise<SearchFilters> => {
+  if (!extractionModel) {
+    throw new Error("AI service is not configured. Please check your GROQ_API_KEY environment variable.");
+  }
+
   const systemPrompt = `You are a filter extraction assistant for an Airbnb-like rental platform.
 Given a user's search query, extract structured filters and return ONLY a JSON object with these fields:
 - location: string (city/area name) or null if not mentioned

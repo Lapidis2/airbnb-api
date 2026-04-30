@@ -124,6 +124,10 @@ Be friendly, concise, and helpful.`;
 
   session.messages.push({ role: "human", content: message });
 
+  if (!model) {
+    throw new Error("AI service is not configured. Please check your GROQ_API_KEY environment variable.");
+  }
+
   try {
     const langChainMessages = session.messages.map((msg) => {
       switch (msg.role) {

@@ -118,6 +118,10 @@ ${bookingSummary}
 
 Based on this history, what are their preferences and what should we recommend?`;
 
+  if (!model) {
+    throw new Error("AI service is not configured. Please check your GROQ_API_KEY environment variable.");
+  }
+
   try {
     const response = await model.invoke([
       { role: "system", content: systemPrompt },

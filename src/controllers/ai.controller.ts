@@ -21,8 +21,11 @@ export const aiSearch = async (req: Request, res: Response): Promise<void> => {
     res.status(200).json(result);
   } catch (error: any) {
     console.error("AI Search error:", error);
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: error.message || "AI search failed" });
+    // Return 429 (Too Many Requests) for AI service unavailable
+    res.status(429).json({
+      message: "AI service is temporarily unavailable due to model deprecation. Please use regular search endpoints.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 
@@ -49,8 +52,11 @@ export const generateDescriptionController = async (
     res.status(200).json(result);
   } catch (error: any) {
     console.error("Generate description error:", error);
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: error.message || "Failed to generate description" });
+    // Return 429 (Too Many Requests) for AI service unavailable
+    res.status(429).json({
+      message: "AI service is temporarily unavailable. Please try again later.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 
@@ -72,8 +78,11 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
     res.status(200).json(result);
   } catch (error: any) {
     console.error("Chat error:", error);
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: error.message || "Chat failed" });
+    // Return 429 (Too Many Requests) for AI service unavailable
+    res.status(429).json({
+      message: "AI service is temporarily unavailable. Please try again later.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 
@@ -91,8 +100,11 @@ export const getRecommendationsController = async (
     res.status(200).json(result);
   } catch (error: any) {
     console.error("Recommendation error:", error);
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: error.message || "Failed to get recommendations" });
+    // Return 429 (Too Many Requests) for AI service unavailable
+    res.status(429).json({
+      message: "AI service is temporarily unavailable. Please try again later.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 
@@ -107,7 +119,10 @@ export const getReviewSummaryController = async (
     res.status(200).json(result);
   } catch (error: any) {
     console.error("Review summary error:", error);
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: error.message || "Failed to get review summary" });
+    // Return 429 (Too Many Requests) for AI service unavailable
+    res.status(429).json({
+      message: "AI service is temporarily unavailable. Please try again later.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };

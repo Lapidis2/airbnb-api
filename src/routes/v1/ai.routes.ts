@@ -1,11 +1,4 @@
 import { Router } from "express";
-import {
-  aiSearch,
-  generateDescriptionController,
-  chatWithAI,
-  getRecommendationsController,
-  getReviewSummaryController,
-} from "../../controllers/ai.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
 
 const route = Router();
@@ -48,7 +41,19 @@ const route = Router();
  *       429:
  *         description: AI service is busy
  */
-route.post("/search", aiSearch);
+route.post("/search", async (req, res) => {
+  try {
+    // Lazy load AI controller to avoid initialization issues
+    const { aiSearch } = await import("../../controllers/ai.controller");
+    await aiSearch(req, res);
+  } catch (error: any) {
+    console.error("AI search route error:", error);
+    res.status(429).json({
+      message: "AI service is temporarily unavailable. Please use regular search endpoints.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+});
 
 /**
  * @swagger
@@ -88,7 +93,18 @@ route.post("/search", aiSearch);
  *       429:
  *         description: AI service is busy
  */
-route.post("/listings/:id/generate-description", authenticate, generateDescriptionController);
+route.post("/listings/:id/generate-description", authenticate, async (req, res) => {
+  try {
+    const { generateDescriptionController } = await import("../../controllers/ai.controller");
+    await generateDescriptionController(req, res);
+  } catch (error: any) {
+    console.error("AI generate description route error:", error);
+    res.status(429).json({
+      message: "AI service is temporarily unavailable.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+});
 
 /**
  * @swagger
@@ -124,7 +140,18 @@ route.post("/listings/:id/generate-description", authenticate, generateDescripti
  *       429:
  *         description: AI service is busy
  */
-route.post("/chat", chatWithAI);
+route.post("/chat", async (req, res) => {
+  try {
+    const { chatWithAI } = await import("../../controllers/ai.controller");
+    await chatWithAI(req, res);
+  } catch (error: any) {
+    console.error("AI chat route error:", error);
+    res.status(429).json({
+      message: "AI service is temporarily unavailable.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+});
 
 /**
  * @swagger
@@ -143,7 +170,18 @@ route.post("/chat", chatWithAI);
  *       429:
  *         description: AI service is busy
  */
-route.post("/recommend", authenticate, getRecommendationsController);
+route.post("/recommend", authenticate, async (req, res) => {
+  try {
+    const { getRecommendationsController } = await import("../../controllers/ai.controller");
+    await getRecommendationsController(req, res);
+  } catch (error: any) {
+    console.error("AI recommend route error:", error);
+    res.status(429).json({
+      message: "AI service is temporarily unavailable.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+});
 
 /**
  * @swagger
@@ -169,6 +207,17 @@ route.post("/recommend", authenticate, getRecommendationsController);
  *       429:
  *         description: AI service is busy
  */
-route.get("/listings/:id/review-summary", getReviewSummaryController);
+route.get("/listings/:id/review-summary", async (req, res) => {
+  try {
+    const { getReviewSummaryController } = await import("../../controllers/ai.controller");
+    await getReviewSummaryController(req, res);
+  } catch (error: any) {
+    console.error("AI review summary route error:", error);
+    res.status(429).json({
+      message: "AI service is temporarily unavailable.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
+  }
+});
 
 export default route;

@@ -9,7 +9,10 @@ import { connectDB } from "./src/config/prismaConfig";
 import { setupSwagger } from "./src/config/swagger.js";
 
 const app = express();
-
+app.use((req, res, next) => {
+  console.log("🌍 GLOBAL HIT:", req.method, req.url);
+  next();
+});
 app.use(
   process.env["NODE_ENV"] === "production"
     ? morgan("combined")
@@ -19,7 +22,7 @@ app.use(
 app.use(compression());
 app.use(express.json());
 
-// Health check endpoint - no API versioning
+
 app.get("/health", (req: Request, res: Response) => {
   res.json({ 
     status: "ok", 
@@ -29,18 +32,18 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
-// API v1 routes
+
 app.use("/api/v1", v1Router);
 
-// API v2 routes (users module)
+
 app.use("/api/v2/users", v2UserRouter);
 
-// Swagger/OpenAPI docs v1
+
 setupSwagger(app);
 
 const PORT = Number(process.env["PORT"]) || 3000;
 
-// Root endpoint
+
 app.get("/", (_req: Request, res: Response) => {
   res.json({
     message: "Welcome to the Airbnb API",
@@ -54,7 +57,7 @@ app.get("/", (_req: Request, res: Response) => {
   });
 });
 
-// 404 handler - catch undefined routes
+
 app.use((req: Request, res: Response) => {
   res.status(404).json({ 
     error: "Route not found",
@@ -63,7 +66,7 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Global error handler
+
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ 

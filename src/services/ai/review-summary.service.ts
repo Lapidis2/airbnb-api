@@ -98,6 +98,10 @@ Return ONLY JSON, no other text.`;
 
 ${reviewsText}`;
 
+  if (!model) {
+    throw new Error("AI service is not configured. Please check your GROQ_API_KEY environment variable.");
+  }
+
   try {
     const response = await model.invoke([
       { role: "system", content: systemPrompt },

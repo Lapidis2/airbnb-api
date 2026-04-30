@@ -4,19 +4,18 @@ import "dotenv/config";
 const groqApiKey = process.env["GROQ_API_KEY"];
 
 if (!groqApiKey) {
-  throw new Error("GROQ_API_KEY is required in environment variables");
+  console.warn("GROQ_API_KEY is not set in environment variables. AI features will not work.");
 }
 
-
-export const model = new ChatGroq({
-  model: "llama3-8b-8192",
+// Only create models if API key exists
+export const model = groqApiKey ? new ChatGroq({
+  model: "llama-3.1-8b-instant",
   temperature: 0.7,
   apiKey: groqApiKey,
-});
+}) : null;
 
-
-export const extractionModel = new ChatGroq({
-  model: "llama3-8b-8192",
+export const extractionModel = groqApiKey ? new ChatGroq({
+  model: "llama-3.1-8b-instant",
   temperature: 0,
   apiKey: groqApiKey,
-});
+}) : null;
