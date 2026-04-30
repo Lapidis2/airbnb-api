@@ -31,7 +31,7 @@ export const aiSearch = async (req: Request, res: Response): Promise<void> => {
     console.error("AI Search error:", error);
     const statusCode = error.statusCode || 500;
     const message = statusCode === 400
-      ? "Could not extract filters from your query. Please be more specific with location, type, price, or guest count."
+      ? "Could not extract filters from your query. Please be more specific with location, type, price, or guest count. related to listings."
       : "AI service is temporarily unavailable. Please use regular search endpoints.";
     res.status(statusCode).json({
       message,
