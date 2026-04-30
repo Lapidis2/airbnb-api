@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import prisma from "../config/prismaConfig";
 import { getCache, setCache, clearCache } from "../config/cache";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import { invalidateReviewSummaryCache } from "../services/ai/review-summary.service";
 
 const REVIEWS_CACHE_KEY = (listingId: string | number) => `reviews:listing:${listingId}`;
 
@@ -144,7 +145,8 @@ export const createReview = async (
       },
     });
 
-    clearCache(`reviews:listing:${listingId}`);
+     clearCache(`reviews:listing:${listingId}`);
+     invalidateReviewSummaryCache(listingId);
 
     const averageRating = await prisma.review.aggregate({
       where: { listingId },
@@ -188,7 +190,8 @@ export const deleteReview = async (
       where: { id },
     });
 
-    clearCache(`reviews:listing:${review.listingId}`);
+     clearCache(`reviews:listing:${review.listingId}`);
+     invalidateReviewSummaryCache(review.listingId);
 
     const averageRating = await prisma.review.aggregate({
       where: { listingId: review.listingId },
