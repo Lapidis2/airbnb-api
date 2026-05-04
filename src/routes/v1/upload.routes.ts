@@ -114,7 +114,8 @@ router.delete(
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         description: The listing ID
  *     requestBody:
  *       required: true

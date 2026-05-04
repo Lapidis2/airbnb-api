@@ -17,7 +17,7 @@ export const aiSearch = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if AI service is configured
+  
     if (!process.env.GROQ_API_KEY) {
       res.status(503).json({
         message: "AI service is not configured. Please check your GROQ_API_KEY environment variable."
