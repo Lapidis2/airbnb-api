@@ -21,7 +21,11 @@ export const welcomeEmail = (name: string, role: string) => {
 
 
 
-export const passwordResetEmail = (name: string, resetLink: string) => {
+export const passwordResetEmail = (
+  name: string,
+  resetLink: string,
+  token: string
+) => {
   return `
   <div style="font-family:Arial;padding:20px;">
     <h2>Hi ${name}</h2>
@@ -29,9 +33,14 @@ export const passwordResetEmail = (name: string, resetLink: string) => {
     <p>Click below to reset your password:</p>
 
     <a href="${resetLink}"
-       style="padding:10px 20px;background:#000;color:#fff;text-decoration:none;">
+       style="padding:10px 20px;background:red;color:#fff;text-decoration:none;border-radius:5px;">
       Reset Password
     </a>
+    
+    <p>Or copy this token:</p>
+    <code style="background:#f4f4f4;padding:5px;border-radius:4px;">
+      ${token}
+    </code>
 
     <p>This link expires in 1 hour.</p>
     <p>If you did not request this, ignore this email.</p>

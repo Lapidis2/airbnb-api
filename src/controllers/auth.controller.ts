@@ -8,6 +8,7 @@ import  crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail";
 import { passwordResetEmail, welcomeEmail } from "../templates/email";
 import { clearCache } from "../config/cache";
+import { token } from "morgan";
 
 const clearUserStatsCache = (): void => {
   clearCache("stats:users");
@@ -186,7 +187,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
       await sendEmail(
         user.email,
         "Reset Password",
-        passwordResetEmail(user.name, resetLink)
+        passwordResetEmail(user.name, resetLink,rawToken)
       );
       console.log("Reset email sent successfully to:", user.email);
     } catch (err) {

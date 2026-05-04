@@ -1,11 +1,11 @@
 import nodemailer from "nodemailer";
 
 export const sendEmail = async (to: string, subject: string, text: string) => {
-  console.log("sendEmail called with to:", to, "subject:", subject);
+
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false, // true for 465, false for 587
+    secure: false, 
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -19,7 +19,7 @@ export const sendEmail = async (to: string, subject: string, text: string) => {
       subject,
       html: text
     });
-    console.log("Email sent successfully:", result);
+   
   } catch (error) {
     console.error("sendEmail error:", error);
     throw error;
