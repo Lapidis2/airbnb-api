@@ -178,7 +178,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     },
   });
 
-  const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password/${rawToken}`;
+  const resetLink = `${process.env.FRONTEND_URL || 'https://airbnb-api-c4yx.onrender.com'}/auth/reset-password/${rawToken}`;
 
   setImmediate(async () => {
     try {
