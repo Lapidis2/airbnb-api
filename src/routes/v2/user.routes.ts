@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getAllUsersV2,
   getUserByIdV2,
-  getUserStatsV2,
+  getUserStatisticsV2,
 } from "../../controllers/v2/user.controller";
 
 const router = Router();
@@ -85,6 +85,53 @@ const router = Router();
  */
 router.get("/", getAllUsersV2);
 
+
+
+/**
+ * @swagger
+ * /api/v2/users/statistics:
+ *   get:
+ *     tags: [Users v2]
+ *     summary: Get user statistics (v2)
+ *     description: Retrieve aggregated user statistics. Standardized v2 response format.
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 version:
+ *                   type: string
+ *                   example: v2
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalUsers:
+ *                       type: integer
+ *                     byRole:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           role:
+ *                             type: string
+ *                           count:
+ *                             type: integer
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *       500:
+ *         description: Server error
+ */
+router.get("/statistics", getUserStatisticsV2);
 /**
  * @swagger
  * /api/v2/users/{id}:
@@ -163,51 +210,5 @@ router.get("/", getAllUsersV2);
  *         description: Server error
  */
 router.get("/:id", getUserByIdV2);
-
-/**
- * @swagger
- * /api/v2/users/stats:
- *   get:
- *     tags: [Users v2]
- *     summary: Get user statistics (v2)
- *     description: Retrieve aggregated user statistics. Standardized v2 response format.
- *     responses:
- *       200:
- *         description: Statistics retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 version:
- *                   type: string
- *                   example: v2
- *                 data:
- *                   type: object
- *                   properties:
- *                     totalUsers:
- *                       type: integer
- *                     byRole:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           role:
- *                             type: string
- *                           count:
- *                             type: integer
- *                 meta:
- *                   type: object
- *                   properties:
- *                     timestamp:
- *                       type: string
- *                       format: date-time
- *       500:
- *         description: Server error
- */
-router.get("/stats", getUserStatsV2);
 
 export default router;

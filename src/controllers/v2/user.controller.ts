@@ -88,7 +88,7 @@ export const getUserByIdV2 = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getUserStatsV2 = async (req: Request, res: Response): Promise<void> => {
+export const getUserStatisticsV2 = async (req: Request, res: Response): Promise<void> => {
   try {
     const [totalUsers, byRole] = await Promise.all([
       prisma.user.count(),
@@ -99,7 +99,7 @@ export const getUserStatsV2 = async (req: Request, res: Response): Promise<void>
       byRole: byRole.map((r) => ({ role: r.role, count: r._count.role })),
     }));
   } catch (error) {
-    console.error("Get user stats v2 error:", error);
+    console.error("Get user statistics v2 error:", error);
     res.status(500).json(createV2Response({ error: "Failed to fetch user statistics" }, false));
   }
 };
