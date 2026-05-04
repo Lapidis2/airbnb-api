@@ -141,7 +141,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     data: { password: hashed },
   });
 
-  res.json({ message: "Password updated" });
+  res.json({ message: "Password changed successful.You can now login with new password" });
 };
 
 
@@ -196,7 +196,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   });
 
   return res.json({
-    message: "If that email exists, reset link has been sent",
+    message: "Reset link with token has been sent",
   });
 };
 

@@ -168,9 +168,9 @@
  *           example: newpassword123
  *     ChangePasswordInput:
  *       type: object
- *       required: [oldPassword, newPassword]
+ *       required: [currentPassword, newPassword]
  *       properties:
- *         oldPassword:
+ *         currentPassword:
  *           type: string
  *           example: currentpassword123
  *         newPassword:
