@@ -178,8 +178,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
     },
   });
 
-  const resetLink = `${process.env.FRONTEND_URL || 'https://airbnb-api-c4yx.onrender.com'}/auth/reset-password/${rawToken}`;
+  const resetLink = `${'http://localhost:3000'}/auth/reset-password/${rawToken}`;
 
+  console.log("Attempting to send reset email to:", user.email);
   setImmediate(async () => {
     try {
       await sendEmail(
@@ -187,6 +188,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         "Reset Password",
         passwordResetEmail(user.name, resetLink)
       );
+      console.log("Reset email sent successfully to:", user.email);
     } catch (err) {
       console.error("Reset email failed:", err);
     }

@@ -38,7 +38,7 @@ const route = Router();
 route.post(
   "/register",
   validate(createUserSchema),
-  register as any
+  register 
 );
 
 /**
@@ -64,7 +64,7 @@ route.post(
  *       401:
  *         description: Invalid credentials
  */
-route.post("/login", login as any);
+route.post("/login", login );
 
 /**
  * @swagger
@@ -85,28 +85,41 @@ route.post("/login", login as any);
  *       404:
  *         description: User not found
  */
-route.post("/forgot-password", forgotPassword as any);
+route.post("/forgot-password", forgotPassword);
 
-/**
- * @swagger
- * /api/v1/auth/reset-password:
- *   post:
- *     summary: Reset password
- *     tags: [Auth]
- *     description: Reset password using token.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/ResetPasswordInput'
- *     responses:
- *       200:
- *         description: Password reset successful
- *       400:
- *         description: Invalid token or other error
- */
-route.post("/reset-password", resetPassword as any);
+ /**
+  * @swagger
+  * /api/v1/auth/reset-password/{token}:
+  *   post:
+  *     summary: Reset password
+  *     tags: [Auth]
+  *     description: Reset password using reset token.
+  *     parameters:
+  *       - in: path
+  *         name: token
+  *         required: true
+  *         schema:
+  *           type: string
+  *         description: Password reset token
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             required:
+  *               - password
+  *             properties:
+  *               password:
+  *                 type: string
+  *                 example: NewPassword123!
+  *     responses:
+  *       200:
+  *         description: Password reset successful
+  *       400:
+  *         description: Invalid or expired token
+  */
+route.post("/reset-password/:token", resetPassword );
 
 /**
  * @swagger
