@@ -3,6 +3,7 @@ import { authenticate } from "../../middlewares/auth.middleware";
 import {
   getListingReviews,
   createReview,
+  updateReview,
   deleteReview,
 } from "../../controllers/reviews.controller";
 
@@ -33,7 +34,7 @@ const route = Router();
  *       404:
  *         description: Listing not found
  */
-route.get("/listings/:listingId/reviews", getListingReviews as any);
+route.get("/listings/:listingId", getListingReviews);
 /**
  * @swagger
  * /api/v1/reviews/listings/{listingId}:
@@ -64,7 +65,40 @@ route.get("/listings/:listingId/reviews", getListingReviews as any);
  *       401:
  *         description: Unauthorized
  */
-route.post("/listings/:listingId/reviews", authenticate, createReview as any);
+route.post("/listings/:listingId", authenticate, createReview);
+/**
+ * @swagger
+ * /api/v1/reviews/{id}:
+ *   put:
+ *     summary: Update review
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Update a review (only owner)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Review ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateReviewInput'
+ *     responses:
+ *       200:
+ *         description: Review updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Review not found
+ */
+route.put("/:id", authenticate, updateReview );
 /**
  * @swagger
  * /api/v1/reviews/{id}:

@@ -6,12 +6,7 @@ import { invalidateReviewSummaryCache } from "../services/ai/review-summary.serv
 
 const REVIEWS_CACHE_KEY = (listingId: string | number) => `reviews:listing:${listingId}`;
 
-/**
- * GET /listings/:listingId/reviews
- * Paginated, includes reviewer name and avatar
- * Cached for 30 seconds
- * Uses Promise.all for data and count
- */
+
 export const getListingReviews = async (
   req: Request,
   res: Response
@@ -58,13 +53,18 @@ export const getListingReviews = async (
     ]);
 
     const response = {
-      data: reviews,
+      Reviews: reviews,
       meta: {
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
       },
+        isEmpty: reviews.length === 0,
+  message:
+    reviews.length === 0
+      ? "No reviews for this listing yet.Creat your first review."
+      : "Reviews fetched successfully",
     };
 
     setCache(cacheKey, response, 30);
@@ -75,11 +75,7 @@ export const getListingReviews = async (
   }
 };
 
-/**
- * POST /listings/:listingId/reviews
- * Required: userId, rating (1-5), comment
- * Clears cache for this listing's reviews
- */
+
 export const createReview = async (
   req: AuthRequest,
   res: Response
@@ -118,6 +114,7 @@ export const createReview = async (
         listingId,
         guestId: userId,
         status: "CONFIRMED",
+        checkOut: { lt: new Date() },
       },
     });
     if (!existingBooking) {
@@ -167,10 +164,72 @@ export const createReview = async (
   }
 };
 
-/**
- * DELETE /reviews/:id
- * Returns 404 if not found
- */
+
+export const updateReview = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { rating, comment } = req.body;
+    const userId = req.userId;
+
+    const review = await prisma.review.findUnique({
+      where: { id },
+    });
+
+    if (!review) {
+      res.status(404).json({ message: "Review not found" });
+      return;
+    }
+
+    if (review.userId !== userId) {
+      res.status(403).json({ message: "You cannot update this review" });
+      return;
+    }
+
+  
+    if (rating !== undefined && (rating < 1 || rating > 5)) {
+      res.status(400).json({ message: "Rating must be between 1 and 5" });
+      return;
+    }
+
+    const updatedReview = await prisma.review.update({
+      where: { id },
+      data: {
+        rating: rating ?? review.rating,
+        comment: comment ?? review.comment,
+      },
+    });
+
+   
+    clearCache(`reviews:listing:${review.listingId}`);
+    invalidateReviewSummaryCache(review.listingId);
+
+    const averageRating = await prisma.review.aggregate({
+      where: { listingId: review.listingId },
+      _avg: { rating: true },
+    });
+
+    await prisma.listing.update({
+      where: { id: review.listingId },
+      data: {
+        rating: averageRating._avg.rating ?? null,
+      },
+    });
+
+    res.status(200).json({
+      message: "Review updated successfully",
+      review: updatedReview,
+    });
+  } catch (error) {
+    console.error("Update review error:", error);
+    res.status(500).json({ message: "Failed to update review" });
+  }
+};
+
+
+
 export const deleteReview = async (
   req: Request,
   res: Response
@@ -216,3 +275,5 @@ export const deleteReview = async (
     res.status(500).json({ message: "Failed to delete review" });
   }
 };
+
+

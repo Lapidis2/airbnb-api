@@ -199,12 +199,9 @@
  *             type: string
  *     CreateBookingInput:
  *       type: object
- *       required: [listingId, guestId, checkIn, checkOut]
+ *       required: [listingId, checkIn, checkOut]
  *       properties:
  *         listingId:
- *           type: string
- *           format: uuid
- *         guestId:
  *           type: string
  *           format: uuid
  *         checkIn:

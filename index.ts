@@ -8,6 +8,7 @@ import v2UserRouter from "./src/routes/v2/user.routes.js";
 import uploadRouter from "./src/routes/v1/upload.routes.js";
 import { connectDB } from "./src/config/prismaConfig";
 import { setupSwagger } from "./src/config/swagger.js";
+import reviewRoutes from "./src/routes/v1/reviews.routes.js";
 import cors from "cors";
 const app = express();
 app.use(cors());
@@ -33,7 +34,7 @@ app.get("/health", (req: Request, res: Response) => {
 
 app.use("/api/v1", v1Router);
 
-
+app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v2/users", v2UserRouter);
 
 app.use("/users", uploadRouter);
