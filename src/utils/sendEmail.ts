@@ -3,7 +3,9 @@ import nodemailer from "nodemailer";
 export const sendEmail = async (to: string, subject: string, text: string) => {
   console.log("sendEmail called with to:", to, "subject:", subject);
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // true for 465, false for 587
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
