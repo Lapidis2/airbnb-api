@@ -9,12 +9,8 @@ export const getAllListings = async (
   try {
     const listings = await prisma.listing.findMany({
       include: {
-        host: {
-          select: {
-            name: true,
-            avatar: true,
-          },
-        },
+        host: true,
+        photos: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -40,12 +36,8 @@ export const getSingleListing = async (
     const listing = await prisma.listing.findUnique({
       where: { id },
       include: {
-        host: {
-          select: {
-            name: true,
-            avatar: true,
-          },
-        },
+        host: true,
+        photos: true,
       },
     });
 
@@ -149,12 +141,8 @@ console.log("WHERE FILTER:", JSON.stringify(where, null, 2));
         skip,
         take: limitNum,
         include: {
-          host: {
-            select: {
-              name: true,
-              avatar: true,
-            },
-          },
+          host: true,
+          photos: true,
         },
         orderBy: { createdAt: "desc" },
       }),
@@ -284,12 +272,8 @@ export const updateListing = async (
 
       },
       include: {
-        host: {
-          select: {
-            name: true,
-            avatar: true,
-          },
-        },
+        host: true,
+        photos: true,
       },
     });
 

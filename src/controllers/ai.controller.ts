@@ -63,7 +63,7 @@ export const generateDescriptionController = async (
     res.status(200).json(result);
   } catch (error: any) {
     console.error("Generate description error:", error);
-    // Return 429 (Too Many Requests) for AI service unavailable
+   
     res.status(429).json({
       message: "AI service is temporarily unavailable. Please try again later.",
       details: process.env.NODE_ENV === "development" ? error.message : undefined
@@ -130,7 +130,7 @@ export const getReviewSummaryController = async (
     res.status(200).json(result);
   } catch (error: any) {
     console.error("Review summary error:", error);
-    // Return 429 (Too Many Requests) for AI service unavailable
+   
     res.status(429).json({
       message: "AI service is temporarily unavailable. Please try again later.",
       details: process.env.NODE_ENV === "development" ? error.message : undefined

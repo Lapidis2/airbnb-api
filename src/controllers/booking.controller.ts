@@ -1,17 +1,23 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../middlewares/auth.middleware";
 
 import prisma from "../config/prismaConfig";
 import { bookingConfirmationEmail } from "../templates/email";
 import { sendEmail } from "../utils/sendEmail";
 
-export const createBooking = async (req: Request, res: Response): Promise<void> => {
+export const createBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { checkIn, checkOut, userId, listingId, guests: guestsCount } = req.body;
+    const { checkIn, checkOut, listingId, guests: guestsCount } = req.body;
 
-    if (!checkIn || !checkOut || !userId || !listingId || guestsCount === undefined) {
+    if (!checkIn || !checkOut || !listingId || guestsCount === undefined) {
       res.status(400).json({
-        message: "checkIn, checkOut, userId, listingId, guests are required",
+        message: "checkIn, checkOut, listingId, and guests are required",
       });
+      return;
+    }
+
+    if (!req.userId) {
+      res.status(401).json({ message: "Unauthorized: Token required" });
       return;
     }
 
@@ -39,7 +45,7 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
     }
 
     const [user, listing] = await Promise.all([
-      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.user.findUnique({ where: { id: req.userId } }),
       prisma.listing.findUnique({ where: { id: listingId } }),
     ]);
 
@@ -94,7 +100,7 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
         checkIn: checkInDate,
         checkOut: checkOutDate,
         totalPrice,
-        guestId: userId,
+        guestId: req.userId,
         listingId,
       },
       include: {
