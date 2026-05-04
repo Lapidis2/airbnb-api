@@ -2,11 +2,11 @@ import { Request, Response } from "express";
 import prisma from "../config/prismaConfig";
 import { getCache, setCache, clearCache } from "../config/cache";
 
-const STATS_CACHE_KEY = "stats";
+const STATISTICS_CACHE_KEY = "statistics";
 
-export const getListingsStats = async (req: Request, res: Response): Promise<void> => {
+export const getListingsStatistics = async (req: Request, res: Response): Promise<void> => {
   try {
-    const cacheKey = `${STATS_CACHE_KEY}:listings`;
+    const cacheKey = `${STATISTICS_CACHE_KEY}:listings`;
     const cached = getCache(cacheKey);
 
     if (cached) {
@@ -39,14 +39,14 @@ export const getListingsStats = async (req: Request, res: Response): Promise<voi
     setCache(cacheKey, result, 300);
     res.status(200).json(result);
   } catch (error) {
-    console.error("Get listings stats error:", error);
+    console.error("Get listings statistics error:", error);
     res.status(500).json({ message: "Failed to fetch listings statistics" });
   }
 };
 
-export const getUserStats = async (req: Request, res: Response): Promise<void> => {
+export const getUserStatistics = async (req: Request, res: Response): Promise<void> => {
   try {
-    const cacheKey = `${STATS_CACHE_KEY}:users`;
+    const cacheKey = `${STATISTICS_CACHE_KEY}:users`;
     const cached = getCache(cacheKey);
 
     if (cached) {
@@ -70,12 +70,12 @@ export const getUserStats = async (req: Request, res: Response): Promise<void> =
     setCache(cacheKey, result, 300);
     res.status(200).json(result);
   } catch (error) {
-    console.error("Get user stats error:", error);
+    console.error("Get user statistics error:", error);
     res.status(500).json({ message: "Failed to fetch user statistics" });
   }
 };
 
-export const clearStatsCache = (): void => {
-  clearCache(`${STATS_CACHE_KEY}:listings`);
-  clearCache(`${STATS_CACHE_KEY}:users`);
+export const clearStatisticsCache = (): void => {
+  clearCache(`${STATISTICS_CACHE_KEY}:listings`);
+  clearCache(`${STATISTICS_CACHE_KEY}:users`);
 };

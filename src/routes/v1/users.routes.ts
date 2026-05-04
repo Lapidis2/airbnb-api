@@ -9,7 +9,7 @@ import {
   getUserBookings,
 } from "../../controllers/users.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
-import { getUserStats } from "../../controllers/stats.controller";
+import { getUserStatistics } from "../../controllers/statistics.controller";
 
 const route = Router();
 /**
@@ -133,7 +133,7 @@ route.delete("/:id", authenticate, deleteUser as any);
 route.get("/:id/bookings", authenticate, getUserBookings as any);
 /**
  * @swagger
- * /api/v1/users/stats:
+ * /api/v1/users/statistics:
  *   get:
  *     summary: Get user statistics
  *     tags: [Users]
@@ -155,6 +155,6 @@ route.get("/:id/bookings", authenticate, getUserBookings as any);
  *                 totalGuests:
  *                   type: number
  */
-route.get("/stats", authenticate, getUserStats as any);
+route.get("/statistics", authenticate, getUserStatistics as any);
 
 export default route;

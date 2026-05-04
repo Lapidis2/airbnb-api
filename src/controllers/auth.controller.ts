@@ -11,7 +11,7 @@ import { clearCache } from "../config/cache";
 import { token } from "morgan";
 
 const clearUserStatsCache = (): void => {
-  clearCache("stats:users");
+  clearCache("statistics:users");
 };
 
 const JWT_SECRET = process.env.JWT_SECRET || "hitayezurusecret";

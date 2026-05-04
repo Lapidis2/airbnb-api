@@ -4,7 +4,7 @@ import { Prisma, Role } from "@prisma/client";
 import { clearCache } from "../config/cache";
 
 const clearUserStatsCache = (): void => {
-  clearCache("stats:users");
+  clearCache("statistics:users");
 };
 
 export const getAllUsers = async (req: Request, res: Response) => {
