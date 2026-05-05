@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import prisma from "../config/prismaConfig";
 import { Prisma, Role } from "@prisma/client";
 import { clearCache } from "../config/cache";
+import { createSuccessResponse } from "../utils/apiResponse";
+import { AppError } from "../errors/AppError";
 
 const clearUserStatsCache = (): void => {
   clearCache("statistics:users");
@@ -42,18 +44,23 @@ export const getAllUsers = async (req: Request, res: Response) => {
       prisma.user.count({ where }),
     ]);
 
-    res.status(200).json({
-      data: users,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    const message = total === 0 ? "No users found matching your criteria." : undefined;
+
+    res.status(200).json(
+      createSuccessResponse(
+        users,
+        message,
+        {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        }
+      )
+    );
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Something went wrong" });
+    throw new AppError("Something went wrong", 500);
   }
 };
 
@@ -69,12 +76,12 @@ export const getUserById = async (req: Request, res: Response) => {
       },
     });
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) throw new AppError("User not found", 404);
 
-    res.json(user);
+    res.status(200).json(createSuccessResponse(user));
   } catch (error) {
     console.log("Error: ", error);
-    res.status(500).json({ message: "Something went wrong" });
+    throw new AppError("Something went wrong", 500);
   }
 };
 
@@ -87,7 +94,7 @@ export const updateUser = async (req: Request, res: Response) => {
     });
 
     if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
+      throw new AppError("User not found", 404);
     }
 
     const updatedUser = await prisma.user.update({
@@ -103,10 +110,10 @@ export const updateUser = async (req: Request, res: Response) => {
 
     clearUserStatsCache();
 
-    res.status(200).json(updatedUser);
+    res.status(200).json(createSuccessResponse(updatedUser, "User updated successfully"));
   } catch (error) {
     console.log("Error: ", error);
-    res.status(500).json({ message: "Something went wrong" });
+    throw new AppError("Something went wrong", 500);
   }
 };
 
@@ -119,7 +126,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     });
 
     if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
+      throw new AppError("User not found", 404);
     }
 
     await prisma.user.delete({
@@ -128,10 +135,10 @@ export const deleteUser = async (req: Request, res: Response) => {
 
     clearUserStatsCache();
 
-    res.status(200).json({ message: "User deleted successfully" });
+    res.status(200).json(createSuccessResponse(null, "User deleted successfully"));
   } catch (error) {
     console.log("Error: ", error);
-    res.status(500).json({ message: "Something went wrong" });
+    throw new AppError("Something went wrong", 500);
   }
 };
 
@@ -147,8 +154,7 @@ export const getUserBookings = async (
     });
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
+      throw new AppError("User not found", 404);
     }
 
     const page = Number(req.query.page) || 1;
@@ -182,17 +188,22 @@ export const getUserBookings = async (
       prisma.booking.count({ where: { guestId: id } }),
     ]);
 
-    res.status(200).json({
-      data: bookings,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    const message = total === 0 ? "No bookings found for this user." : undefined;
+
+    res.status(200).json(
+      createSuccessResponse(
+        bookings,
+        message,
+        {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        }
+      )
+    );
   } catch (error) {
     console.error("Get user bookings error:", error);
-    res.status(500).json({ message: "Failed to fetch user bookings" });
+    throw new AppError("Failed to fetch user bookings", 500);
   }
 };

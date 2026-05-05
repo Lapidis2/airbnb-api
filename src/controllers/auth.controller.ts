@@ -9,6 +9,8 @@ import { sendEmail } from "../utils/sendEmail";
 import { passwordResetEmail, welcomeEmail } from "../templates/email";
 import { clearCache } from "../config/cache";
 import { token } from "morgan";
+import { createSuccessResponse } from "../utils/apiResponse";
+import { AppError } from "../errors/AppError";
 
 const clearUserStatsCache = (): void => {
   clearCache("statistics:users");
@@ -21,11 +23,11 @@ export const register = async (req: Request, res: Response) => {
    const { name, email, username, password, role, phone } = req.body;
 
   if (!name || !email || !username || !password || !phone) {
-    return res.status(400).json({ message: "Missing required fields" });
+    throw new AppError("Missing required fields", 400);
   }
 
   if (password.length < 8) {
-    return res.status(400).json({ message: "Password must be at least 8 characters" });
+    throw new AppError("Password must be at least 8 characters", 400);
   }
 
 const existingUser = await prisma.user.findFirst({
@@ -38,7 +40,7 @@ const existingUser = await prisma.user.findFirst({
 });
 
   if (existingUser) {
-    return res.status(409).json({ message: "User already exists" });
+    throw new AppError("User already exists", 409);
   }
 
   const hashedpassword = await bcrypt.hash(password, 10);
@@ -58,7 +60,7 @@ const existingUser = await prisma.user.findFirst({
 
  const { password:_, ...safeUser } = user;
 
-res.status(201).json(safeUser);
+ res.status(201).json(createSuccessResponse(safeUser, "User registered successfully"));
 
   setImmediate(async () => {
     try {
@@ -72,9 +74,9 @@ res.status(201).json(safeUser);
     }
   });
   
- } catch (error) {
-  console.error("Error during registration:", error);
-  res.status(500).json({ message: "Internal server error" });
+  } catch (error) {
+   console.error("Error during registration:", error);
+   throw new AppError("Internal server error", 500);
  }
 };
 
@@ -88,16 +90,16 @@ export const login = async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    return res.status(401).json({ message: "Invalid credentials" });
+    throw new AppError("Invalid credentials", 401);
   }
   if (!user.password) {
-  return res.status(401).json({ message: "Invalid credentials" });
-}
+    throw new AppError("Invalid credentials", 401);
+  }
 
   const isValid = await bcrypt.compare(password, user.password);
 
   if (!isValid) {
-    return res.status(401).json({ message: "Invalid credentials" });
+    throw new AppError("Invalid credentials", 401);
   }
 
   const token = jwt.sign(
@@ -108,12 +110,10 @@ export const login = async (req: Request, res: Response) => {
 
  
 
-  res.json({ token, user });
-  } catch (error) 
-  
-  {
+  res.status(200).json(createSuccessResponse({ token, user }, "Login successful"));
+  } catch (error) {
     console.error("Error during login:", error);
-    res.status(500).json({ message: "Internal server error" });
+    throw new AppError("Internal server error", 500);
   }
 };
 
@@ -121,17 +121,17 @@ export const login = async (req: Request, res: Response) => {
 export const changePassword = async (req: AuthRequest, res: Response) => {
   const { currentPassword, newPassword } = req.body;
   if (!req.userId) {
-  return res.status(401).json({ message: "Unauthorized" });
-}
+    throw new AppError("Unauthorized", 401);
+  }
 
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
 
-  if (!user) return res.status(404).json({ message: "Not found" });
+  if (!user) throw new AppError("User not found", 404);
 
   const match = await bcrypt.compare(currentPassword, user.password);
 
   if (!match) {
-    return res.status(401).json({ message: "Wrong password" });
+    throw new AppError("Wrong password", 401);
   }
 
   const hashed = await bcrypt.hash(newPassword, 10);
@@ -141,7 +141,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     data: { password: hashed },
   });
 
-  res.json({ message: "Password changed successful.You can now login with new password" });
+  res.status(200).json(createSuccessResponse(null, "Password changed successfully. You can now login with new password"));
 };
 
 
@@ -153,15 +153,13 @@ export const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ message: "Email is required" });
+    throw new AppError("Email is required", 400);
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    return res.json({
-      message: "If that email exists, reset link has been sent",
-    });
+    return res.status(200).json(createSuccessResponse(null, "If that email exists, reset link has been sent"));
   }
 
   const rawToken = crypto.randomBytes(32).toString("hex");
@@ -195,9 +193,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     }
   });
 
-  return res.json({
-    message: "Reset link with token has been sent",
-  });
+  return res.status(200).json(createSuccessResponse(null, "Reset link with token has been sent"));
 };
 
 
@@ -205,8 +201,8 @@ export const resetPassword = async (req: Request, res: Response) => {
   const { token } = req.params;
   const { password } = req.body;
   if (!token || Array.isArray(token)) {
-  return res.status(400).json({ message: "Invalid token" });
-}
+    throw new AppError("Invalid token", 400);
+  }
 
 
   const hashed = crypto.createHash("sha256").update(token).digest("hex");
@@ -219,7 +215,7 @@ export const resetPassword = async (req: Request, res: Response) => {
   });
 
   if (!user) {
-    return res.status(400).json({ message: "Invalid or expired token" });
+    throw new AppError("Invalid or expired token", 400);
   }
 
   const newHashed = await bcrypt.hash(password, 10);
@@ -233,5 +229,5 @@ export const resetPassword = async (req: Request, res: Response) => {
     },
   });
 
-  res.json({ message: "Password reset successful" });
+  res.status(200).json(createSuccessResponse(null, "Password reset successful"));
 };

@@ -4,44 +4,35 @@ import { AuthRequest } from "../middlewares/auth.middleware";
 import prisma from "../config/prismaConfig";
 import { bookingConfirmationEmail } from "../templates/email";
 import { sendEmail } from "../utils/sendEmail";
+import { createSuccessResponse } from "../utils/apiResponse";
+import { AppError } from "../errors/AppError";
 
 export const createBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { checkIn, checkOut, listingId, guests: guestsCount } = req.body;
 
     if (!checkIn || !checkOut || !listingId || guestsCount === undefined) {
-      res.status(400).json({
-        message: "checkIn, checkOut, listingId, and guests are required",
-      });
-      return;
+      throw new AppError("checkIn, checkOut, listingId, and guests are required", 400);
     }
 
     if (!req.userId) {
-      res.status(401).json({ message: "Unauthorized: Token required" });
-      return;
+      throw new AppError("Unauthorized: Token required", 401);
     }
 
     const guestsNum = Number(guestsCount);
     if (isNaN(guestsNum) || guestsNum < 1) {
-      res.status(400).json({
-        message: "Guests must be a positive number",
-      });
-      return;
+      throw new AppError("Guests must be a positive number", 400);
     }
 
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
 
     if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
-      res.status(400).json({ message: "Invalid date format" });
-      return;
+      throw new AppError("Invalid date format", 400);
     }
 
     if (checkOutDate <= checkInDate) {
-      res.status(400).json({
-        message: "checkOut must be after checkIn",
-      });
-      return;
+      throw new AppError("checkOut must be after checkIn", 400);
     }
 
     const [user, listing] = await Promise.all([
@@ -50,8 +41,7 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
     ]);
 
     if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
+      throw new AppError("User not found", 404);
     }
 
     if (!listing) {
@@ -60,15 +50,11 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     if (!listing) {
-      res.status(404).json({ message: "Listing not found" });
-      return;
+      throw new AppError("Listing not found", 404);
     }
 
     if (guestsNum > listing.guests) {
-      res.status(400).json({
-        message: `This listing only accommodates up to ${listing.guests} guests`,
-      });
-      return;
+      throw new AppError(`This listing only accommodates up to ${listing.guests} guests`, 400);
     }
 
     const overlap = await prisma.booking.findFirst({
@@ -83,10 +69,7 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
     });
 
     if (overlap) {
-      res.status(400).json({
-        message: "Listing already booked for those dates",
-      });
-      return;
+      throw new AppError("Listing already booked for those dates", 400);
     }
 
     const nights =
@@ -109,7 +92,7 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
       },
     });
 
-    res.status(201).json(booking);
+    res.status(201).json(createSuccessResponse(booking, "Booking created successfully"));
 
     setImmediate(async () => {
       try {
@@ -136,7 +119,7 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to create booking" });
+    throw new AppError("Failed to create booking", 500);
   }
 };
 
@@ -162,18 +145,23 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       prisma.booking.count(),
     ]);
 
-    res.status(200).json({
-      data: bookings,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    const message = total === 0 ? "No bookings found." : undefined;
+
+    res.status(200).json(
+      createSuccessResponse(
+        bookings,
+        message,
+        {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        }
+      )
+    );
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to fetch bookings" });
+    throw new AppError("Failed to fetch bookings", 500);
   }
 };
 
@@ -193,14 +181,13 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
     });
 
     if (!booking) {
-      res.status(404).json({ message: "Booking not found" });
-      return;
+      throw new AppError("Booking not found", 404);
     }
 
-    res.status(200).json(booking);
+    res.status(200).json(createSuccessResponse(booking));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to fetch booking" });
+    throw new AppError("Failed to fetch booking", 500);
   }
 };
 

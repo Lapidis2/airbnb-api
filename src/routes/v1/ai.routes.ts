@@ -1,223 +1,148 @@
 import { Router } from "express";
-import { authenticate } from "../../middlewares/auth.middleware";
+import { aiSearch, generateDescriptionController, chatWithAI, getRecommendationsController, getReviewSummaryController } from "../../controllers/ai.controller.js";
+import { authenticate } from "../../middlewares/auth.middleware.js";
 
-const route = Router();
+const router = Router();
 
 /**
  * @swagger
  * /api/v1/ai/search:
  *   post:
- *     summary: AI-Powered Smart Search
- *     tags: [AI Features]
- *     description: Search listings using natural language queries with AI-powered filter extraction
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - query
- *             properties:
- *               query:
- *                 type: string
- *                 description: Natural language search query
+ *     summary: AI-powered listing search
+ *     tags: [AI]
+ *     description: Search listings using AI-powered natural language processing and filters.
  *     parameters:
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
+ *           minimum: 1
  *           default: 1
+ *         description: Page number for pagination
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           minimum: 1
+ *           maximum: 100
  *           default: 10
- *     responses:
- *       200:
- *         description: Search results with extracted filters and pagination
- *       400:
- *         description: Could not extract filters from query
- *       429:
- *         description: AI service is busy
- */
-route.post("/search", async (req, res) => {
-  try {
-    // Lazy load AI controller to avoid initialization issues
-    const { aiSearch } = await import("../../controllers/ai.controller");
-    await aiSearch(req, res);
-  } catch (error: any) {
-    console.error("AI search route error:", error);
-    res.status(429).json({
-      message: "AI service is temporarily unavailable. Please use regular search endpoints.",
-      details: process.env.NODE_ENV === "development" ? error.message : undefined
-    });
-  }
-});
-
-/**
- * @swagger
- * /api/v1/ai/listings/{id}/generate-description:
- *   post:
- *     summary: AI Listing Description Generator
- *     tags: [AI Features]
- *     description: Generate a property description using AI with tone control
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Listing ID
+ *         description: Number of results per page
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               tone:
- *                 type: string
- *                 enum: [professional, casual, luxury]
- *                 default: professional
- *                 description: Writing tone for the description
+ *             $ref: '#/components/schemas/AISearchInput'
  *     responses:
  *       200:
- *         description: Generated description and updated listing
- *       403:
- *         description: Not the owner
- *       404:
- *         description: Listing not found
- *       429:
- *         description: AI service is busy
+ *         description: Search results returned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AISearchResponse'
+ *       400:
+ *         description: Invalid search parameters or query
+ *       503:
+ *         description: AI service not configured or unavailable
  */
-route.post("/listings/:id/generate-description", authenticate, async (req, res) => {
-  try {
-    const { generateDescriptionController } = await import("../../controllers/ai.controller");
-    await generateDescriptionController(req, res);
-  } catch (error: any) {
-    console.error("AI generate description route error:", error);
-    res.status(429).json({
-      message: "AI service is temporarily unavailable.",
-      details: process.env.NODE_ENV === "development" ? error.message : undefined
-    });
-  }
-});
+router.post("/search", aiSearch);
 
 /**
  * @swagger
  * /api/v1/ai/chat:
  *   post:
- *     summary: AI Guest Support Chatbot
- *     tags: [AI Features]
- *     description: Chat with an AI assistant for guest support (optionally with listing context)
+ *     summary: Chat with AI assistant
+ *     tags: [AI]
+ *     description: Send messages to the AI assistant for help with booking inquiries.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - sessionId
- *               - message
- *             properties:
- *               sessionId:
- *                 type: string
- *                 description: Unique session identifier for conversation history
- *               message:
- *                 type: string
- *                 description: User's message
- *               listingId:
- *                 type: string
- *                 description: Optional listing ID to provide context-specific answers
+ *             $ref: '#/components/schemas/AIChatInput'
  *     responses:
  *       200:
- *         description: AI response with session tracking
- *       404:
- *         description: Listing not found
- *       429:
- *         description: AI service is busy
+ *         description: AI response generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AIChatResponse'
+ *       503:
+ *         description: AI chat service temporarily unavailable
  */
-route.post("/chat", async (req, res) => {
-  try {
-    const { chatWithAI } = await import("../../controllers/ai.controller");
-    await chatWithAI(req, res);
-  } catch (error: any) {
-    console.error("AI chat route error:", error);
-    res.status(429).json({
-      message: "AI service is temporarily unavailable.",
-      details: process.env.NODE_ENV === "development" ? error.message : undefined
-    });
-  }
-});
+router.post("/chat", chatWithAI);
 
 /**
  * @swagger
- * /api/v1/ai/recommend:
- *   post:
- *     summary: AI Booking-Based Recommendations
- *     tags: [AI Features]
- *     description: Get personalized listing recommendations based on your booking history
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Personalized recommendations based on booking history
- *       400:
- *         description: No booking history
- *       429:
- *         description: AI service is busy
- */
-route.post("/recommend", authenticate, async (req, res) => {
-  try {
-    const { getRecommendationsController } = await import("../../controllers/ai.controller");
-    await getRecommendationsController(req, res);
-  } catch (error: any) {
-    console.error("AI recommend route error:", error);
-    res.status(429).json({
-      message: "AI service is temporarily unavailable.",
-      details: process.env.NODE_ENV === "development" ? error.message : undefined
-    });
-  }
-});
-
-/**
- * @swagger
- * /api/v1/ai/listings/{id}/review-summary:
+ * /api/v1/ai/reviews/{listingId}/summary:
  *   get:
- *     summary: AI Review Summary
- *     tags: [AI Features]
- *     description: Get AI-generated summary of guest reviews for a listing (cached 10 minutes)
+ *     summary: Get AI-generated review summary
+ *     tags: [AI]
+ *     description: Generate an AI summary of all reviews for a specific listing.
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: listingId
  *         required: true
  *         schema:
  *           type: string
- *         description: Listing ID
+ *           format: uuid
+ *         description: UUID of the listing
  *     responses:
  *       200:
- *         description: AI-generated review summary with average rating
- *       400:
- *         description: Not enough reviews (minimum 3 required)
+ *         description: Review summary generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AIReviewSummaryResponse'
  *       404:
  *         description: Listing not found
- *       429:
- *         description: AI service is busy
+ *       503:
+ *         description: AI review summary service temporarily unavailable
  */
-route.get("/listings/:id/review-summary", async (req, res) => {
-  try {
-    const { getReviewSummaryController } = await import("../../controllers/ai.controller");
-    await getReviewSummaryController(req, res);
-  } catch (error: any) {
-    console.error("AI review summary route error:", error);
-    res.status(429).json({
-      message: "AI service is temporarily unavailable.",
-      details: process.env.NODE_ENV === "development" ? error.message : undefined
-    });
-  }
-});
+router.get("/reviews/:listingId/summary", getReviewSummaryController);
 
-export default route;
+/**
+ * @swagger
+ * /api/v1/ai/generate-description:
+ *   post:
+ *     summary: Generate AI listing description
+ *     tags: [AI]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Generate an AI-powered description for a listing (host only).
+ *     responses:
+ *       200:
+ *         description: Description generated successfully
+ *       401:
+ *         description: Unauthorized - authentication required
+ *       403:
+ *         description: Forbidden - host access only
+ *       503:
+ *         description: AI description generation temporarily unavailable
+ */
+router.post("/generate-description", authenticate, generateDescriptionController);
+
+/**
+ * @swagger
+ * /api/v1/ai/recommendations:
+ *   get:
+ *     summary: Get personalized AI recommendations
+ *     tags: [AI]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Get personalized listing recommendations based on user preferences and history.
+ *     responses:
+ *       200:
+ *         description: Recommendations generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AIRecommendationsResponse'
+ *       401:
+ *         description: Unauthorized - authentication required
+ *       503:
+ *         description: AI recommendations service temporarily unavailable
+ */
+router.get("/recommendations", authenticate, getRecommendationsController);
+
+export default router;

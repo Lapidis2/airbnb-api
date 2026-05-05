@@ -1,6 +1,7 @@
 import prisma from "../../config/prismaConfig";
 import { model } from "../../config/ai";
 import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
+import { AppError } from "../../errors/AppError";
 
 type MessageRole = "system" | "human" | "ai";
 
@@ -125,7 +126,7 @@ Be friendly, concise, and helpful.`;
   session.messages.push({ role: "human", content: message });
 
   if (!model) {
-    throw new Error("AI service is not configured. Please check your GROQ_API_KEY environment variable.");
+    throw new AppError("AI service is not configured. Please check your GROQ_API_KEY environment variable.", 503);
   }
 
   try {
@@ -168,7 +169,7 @@ Be friendly, concise, and helpful.`;
       throw configError;
     }
     console.error("Chat error:", error);
-    throw new Error("Failed to get response from AI");
+    throw new AppError("Failed to get response from AI", 500);
   }
 };
 

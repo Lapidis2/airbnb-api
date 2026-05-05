@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { AppError } from "../errors/AppError";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
@@ -23,13 +24,13 @@ export const authenticate = (
  const header = req.headers.authorization;
 
 if (!header || !header.startsWith("Bearer ")) {
-  return res.status(401).json({ message: "No token provided" });
+  throw new AppError("No token provided", 401);
 }
 
 const token = header.split(" ")[1];
 
 if (!token) {
-  return res.status(401).json({ message: "Invalid token format" });
+  throw new AppError("Invalid token format", 401);
 }
 
 
@@ -41,22 +42,22 @@ if (!token) {
 
     next();
   } catch {
-    return res.status(401).json({ message: "Invalid token" });
+    throw new AppError("Invalid token", 401);
   }
 };
 
 export const requireHost = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.role === "HOST" || req.role === "ADMIN") return next();
-  return res.status(403).json({ message: "Host only is allowed" });
+  throw new AppError("Host access required", 403);
 };
 
 export const requireGuest = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.role === "GUEST" || req.role === "ADMIN") return next();
-  return res.status(403).json({ message: "Guest only is allowed" });
+  throw new AppError("Guest access required", 403);
 };
 
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.role === "ADMIN") return next();
-  return res.status(403).json({ message: "Admin only only is allowed to do so!" });
+  throw new AppError("Admin access required", 403);
 };
 

@@ -6,10 +6,12 @@ import morgan from "morgan";
 import v1Router from "./src/routes/v1/index.js";
 import v2UserRouter from "./src/routes/v2/user.routes.js";
 import uploadRouter from "./src/routes/v1/upload.routes.js";
+import reviewsRouter from "./src/routes/v1/reviews.routes.js";
 import { connectDB } from "./src/config/prismaConfig";
 import { setupSwagger } from "./src/config/swagger.js";
-import reviewRoutes from "./src/routes/v1/reviews.routes.js";
 import cors from "cors";
+import { errorHandler } from "./src/middlewares/error.middleware.js";
+import { AppError } from "./src/errors/AppError.js";
 const app = express();
 app.use(cors());
 app.use(
@@ -34,7 +36,7 @@ app.get("/health", (req: Request, res: Response) => {
 
 app.use("/api/v1", v1Router);
 
-app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/reviews", reviewsRouter);
 app.use("/api/v2/users", v2UserRouter);
 
 app.use("/users", uploadRouter);
@@ -58,23 +60,16 @@ app.get("/", (_req: Request, res: Response) => {
   });
 });
 
+// Handle service worker requests gracefully
+app.get("/sw.js", (_req: Request, res: Response) => {
+  res.status(404).json({ message: "Service worker not found" });
+});
 
 app.use((req: Request, res: Response) => {
-  res.status(404).json({ 
-    error: "Route not found",
-    path: req.originalUrl,
-    method: req.method
-  });
+  throw new AppError(`Route not found: ${req.method} ${req.originalUrl}`, 404);
 });
 
-
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    error: "Something went wrong",
-    message: process.env.NODE_ENV === "production" ? undefined : err.message
-  });
-});
+app.use(errorHandler);
 
 const main = async () => {
   await connectDB();

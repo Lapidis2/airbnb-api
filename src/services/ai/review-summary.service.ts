@@ -1,6 +1,7 @@
 import prisma from "../../config/prismaConfig";
 import { model } from "../../config/ai";
 import { getCache, setCache, clearCache as clearGenericCache } from "../../config/cache";
+import { AppError } from "../../errors/AppError";
 
 interface ReviewWithUser {
   id: string;
@@ -99,7 +100,7 @@ Return ONLY JSON, no other text.`;
 ${reviewsText}`;
 
   if (!model) {
-    throw new Error("AI service is not configured. Please check your GROQ_API_KEY environment variable.");
+    throw new AppError("AI service is not configured. Please check your GROQ_API_KEY environment variable.", 503);
   }
 
   try {
@@ -112,7 +113,7 @@ ${reviewsText}`;
     const jsonMatch = content.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
-      throw new Error("No JSON object found in AI response");
+      throw new AppError("Failed to parse AI response", 500);
     }
 
      const parsed: ReviewSummaryOutput = JSON.parse(jsonMatch[0]);
@@ -143,7 +144,7 @@ ${reviewsText}`;
       throw configError;
     }
     console.error("Review summary error:", error);
-    throw new Error("Failed to generate review summary");
+    throw new AppError("Failed to generate review summary", 500);
   }
 };
 

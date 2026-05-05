@@ -1,6 +1,7 @@
 import prisma from "../../config/prismaConfig";
 import { model } from "../../config/ai";
 import { AuthRequest } from "../../middlewares/auth.middleware";
+import { AppError } from "../../errors/AppError";
 
 type Tone = "professional" | "casual" | "luxury";
 
@@ -62,15 +63,11 @@ export const generateDescription = async (
   });
 
   if (!listing) {
-    const error = new Error("Listing not found");
-    (error as any).statusCode = 404;
-    throw error;
+    throw new AppError("Listing not found", 404);
   }
 
   if (listing.hostId !== userId) {
-    const error = new Error("Unauthorized: Not the owner");
-    (error as any).statusCode = 403;
-    throw error;
+    throw new AppError("Unauthorized: Only the listing owner can generate descriptions", 403);
   }
 
   const params: DescriptionPromptParams = {
@@ -107,7 +104,7 @@ Type: ${params.type}
 Amenities: ${params.amenities.join(", ")}`;
 
   if (!model) {
-    throw new Error("AI service is not configured. Please check your GROQ_API_KEY environment variable.");
+    throw new AppError("AI service is not configured. Please check your GROQ_API_KEY environment variable.", 503);
   }
 
   try {
@@ -136,16 +133,12 @@ Amenities: ${params.amenities.join(", ")}`;
     };
   } catch (error: any) {
     if (error?.status === 429) {
-      const groqError = new Error("AI service is busy, please try again in a moment");
-      (groqError as any).statusCode = 429;
-      throw groqError;
+      throw new AppError("AI service is busy, please try again in a moment", 429);
     }
     if (error?.status === 401) {
-      const configError = new Error("AI service configuration error");
-      (configError as any).statusCode = 500;
-      throw configError;
+      throw new AppError("AI service configuration error", 500);
     }
     console.error("Description generation error:", error);
-    throw new Error("Failed to generate description");
+    throw new AppError("Failed to generate description", 500);
   }
 };

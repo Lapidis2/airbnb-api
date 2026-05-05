@@ -2,6 +2,8 @@ import prisma from "../config/prismaConfig";
 import { Request, Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { Prisma } from "@prisma/client";
+import { createSuccessResponse } from "../utils/apiResponse";
+import { AppError } from "../errors/AppError";
 export const getAllListings = async (
   req: AuthRequest,
   res: Response,
@@ -17,12 +19,10 @@ export const getAllListings = async (
       },
     });
 
-    res.status(200).json(listings);
+    res.status(200).json(createSuccessResponse(listings));
   } catch (error) {
     console.error("Get listings error:", error);
-    res.status(500).json({
-      message: "Failed to fetch listings",
-    });
+    throw new AppError("Failed to fetch listings", 500);
   }
 };
 
@@ -42,18 +42,13 @@ export const getSingleListing = async (
     });
 
     if (!listing) {
-      res.status(404).json({
-        message: "Listing not found",
-      });
-      return;
+      throw new AppError("Listing not found", 404);
     }
 
-    res.status(200).json(listing);
+    res.status(200).json(createSuccessResponse(listing));
   } catch (error) {
     console.error("Get single listing error:", error);
-    res.status(500).json({
-      message: "Failed to fetch listing",
-    });
+    throw new AppError("Failed to fetch listing", 500);
   }
 };
 
@@ -76,12 +71,10 @@ export const searchListings = async (
     const limitNum = Number(limit);
 
     if (!Number.isInteger(pageNum) || pageNum < 1) {
-      res.status(400).json({ message: "Invalid page number" });
-      return;
+      throw new AppError("Invalid page number", 400);
     }
     if (!Number.isInteger(limitNum) || limitNum < 1 || limitNum > 100) {
-      res.status(400).json({ message: "Invalid limit" });
-      return;
+      throw new AppError("Invalid limit", 400);
     }
 
     const skip = (pageNum - 1) * limitNum;
@@ -99,8 +92,7 @@ export const searchListings = async (
       const validTypes = ["APARTMENT", "HOUSE", "VILLA", "CABIN"];
       const normalizedType = type.toUpperCase();
       if (!validTypes.includes(normalizedType)) {
-        res.status(400).json({ message: "Invalid listing type" });
-        return;
+        throw new AppError("Invalid listing type", 400);
       }
       where.type = normalizedType as Prisma.EnumListingTypeFilter;
     }
@@ -109,16 +101,14 @@ export const searchListings = async (
     if (minPrice !== undefined) {
       const min = Number(minPrice as string);
       if (isNaN(min)) {
-        res.status(400).json({ message: "Invalid minPrice" });
-        return;
+        throw new AppError("Invalid minPrice", 400);
       }
       priceFilter.gte = min;
     }
     if (maxPrice !== undefined) {
       const max = Number(maxPrice as string);
       if (isNaN(max)) {
-        res.status(400).json({ message: "Invalid maxPrice" });
-        return;
+        throw new AppError("Invalid maxPrice", 400);
       }
       priceFilter.lte = max;
     }
@@ -129,8 +119,7 @@ export const searchListings = async (
     if (guests !== undefined) {
       const guestsNum = Number(guests);
       if (isNaN(guestsNum) || guestsNum < 1) {
-        res.status(400).json({ message: "Invalid guests count" });
-        return;
+        throw new AppError("Invalid guests count", 400);
       }
       where.guests = { gte: guestsNum };
     }
@@ -149,20 +138,25 @@ console.log("WHERE FILTER:", JSON.stringify(where, null, 2));
       prisma.listing.count({ where }),
     ]);
 
-    res.status(200).json({
-      data: listings,
-      meta: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        totalPages: Math.ceil(total / limitNum),
-      },
-    });
+    const message = total === 0
+      ? "No listings found for your search. Try adjusting location, price, or type."
+      : undefined;
+
+    res.status(200).json(
+      createSuccessResponse(
+        listings,
+        message,
+        {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+        }
+      )
+    );
   } catch (error) {
     console.error("Search listings error:", error);
-    res.status(500).json({
-      message: "Failed to search listings",
-    });
+    throw new AppError("Failed to search listings", 500);
   }
 };
 
@@ -183,14 +177,12 @@ export const createListing = async (
 
     
     if (!title || !location || !pricePerNight || !guests || !type) {
-      res.status(400).json({ message: "Missing required fields" });
-      return;
+      throw new AppError("Missing required fields", 400);
     }
 
     
     if (!req.userId) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
+      throw new AppError("Unauthorized", 401);
     }
 
      const listing = await prisma.listing.create({
@@ -206,10 +198,10 @@ export const createListing = async (
        },
     });
 
-    res.status(201).json(listing);
+    res.status(201).json(createSuccessResponse(listing, "Listing created successfully"));
   } catch (error) {
     console.log("Create listing error:", error);
-    res.status(500).json({ message: "Failed to create listing" });
+    throw new AppError("Failed to create listing", 500);
   }
 };
 
@@ -228,16 +220,12 @@ export const updateListing = async (
     });
 
     if (!listing) {
-       res.status(404).json({ message: "Listing not found" });
-       return
+       throw new AppError("Listing not found", 404);
     }
     
    if (listing.hostId !== req.userId && req.role !== "ADMIN") {
-   res.status(403).json({
-     message: "You can only edit your own listings",
-   });
-   return; 
- }
+     throw new AppError("You can only edit your own listings", 403);
+   }
 
     const {
       title,
@@ -277,13 +265,10 @@ export const updateListing = async (
       },
     });
 
-    res.status(200).json({
-      message: "Listing updated successfully",
-      data: updatedListing,
-    });
+    res.status(200).json(createSuccessResponse(updatedListing, "Listing updated successfully"));
   } catch (error) {
     console.error("Update listing error:", error);
-    res.status(500).json({ message: "Failed to update listing" });
+    throw new AppError("Failed to update listing", 500);
   }
 };
    
@@ -302,16 +287,16 @@ export const deleteListing = async (
     });
 
     if (!existingListing) {
-      res.status(404).json({ message: "Listing not found" });
-      return;
+      throw new AppError("Listing not found", 404);
     }
 
     await prisma.listing.delete({
       where: { id },
     });
 
-    res.status(200).json({ message: "Listing deleted successfully" });
+    res.status(200).json(createSuccessResponse(null, "Listing deleted successfully"));
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete listing", error });
+    console.error("Delete listing error:", error);
+    throw new AppError("Failed to delete listing", 500);
   }
 };

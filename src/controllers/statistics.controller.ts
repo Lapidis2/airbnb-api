@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import prisma from "../config/prismaConfig";
 import { getCache, setCache, clearCache } from "../config/cache";
+import { createSuccessResponse } from "../utils/apiResponse";
+import { AppError } from "../errors/AppError";
 
 const STATISTICS_CACHE_KEY = "statistics";
 
@@ -10,7 +12,7 @@ export const getListingsStatistics = async (req: Request, res: Response): Promis
     const cached = getCache(cacheKey);
 
     if (cached) {
-      res.status(200).json(cached);
+      res.status(200).json(createSuccessResponse(cached));
       return;
     }
 
@@ -37,10 +39,10 @@ export const getListingsStatistics = async (req: Request, res: Response): Promis
     };
 
     setCache(cacheKey, result, 300);
-    res.status(200).json(result);
+    res.status(200).json(createSuccessResponse(result));
   } catch (error) {
     console.error("Get listings statistics error:", error);
-    res.status(500).json({ message: "Failed to fetch listings statistics" });
+    throw new AppError("Failed to fetch listings statistics", 500);
   }
 };
 
@@ -50,7 +52,7 @@ export const getUserStatistics = async (req: Request, res: Response): Promise<vo
     const cached = getCache(cacheKey);
 
     if (cached) {
-      res.status(200).json(cached);
+      res.status(200).json(createSuccessResponse(cached));
       return;
     }
 
@@ -68,10 +70,10 @@ export const getUserStatistics = async (req: Request, res: Response): Promise<vo
     };
 
     setCache(cacheKey, result, 300);
-    res.status(200).json(result);
+    res.status(200).json(createSuccessResponse(result));
   } catch (error) {
     console.error("Get user statistics error:", error);
-    res.status(500).json({ message: "Failed to fetch user statistics" });
+    throw new AppError("Failed to fetch user statistics", 500);
   }
 };
 

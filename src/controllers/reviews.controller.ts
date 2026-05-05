@@ -3,6 +3,8 @@ import prisma from "../config/prismaConfig";
 import { getCache, setCache, clearCache } from "../config/cache";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { invalidateReviewSummaryCache } from "../services/ai/review-summary.service";
+import { createSuccessResponse } from "../utils/apiResponse";
+import { AppError } from "../errors/AppError";
 
 const REVIEWS_CACHE_KEY = (listingId: string | number) => `reviews:listing:${listingId}`;
 
@@ -29,8 +31,7 @@ export const getListingReviews = async (
     });
 
     if (!listingExists) {
-      res.status(404).json({ message: "Listing not found" });
-      return;
+      throw new AppError("Listing not found", 404);
     }
 
     const [reviews, total] = await Promise.all([
@@ -52,26 +53,26 @@ export const getListingReviews = async (
       prisma.review.count({ where: { listingId } }),
     ]);
 
-    const response = {
-      Reviews: reviews,
-      meta: {
+    const message = total === 0
+      ? "No reviews for this listing yet. Create your first review."
+      : undefined;
+
+    const response = createSuccessResponse(
+      reviews,
+      message,
+      {
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
-      },
-        isEmpty: reviews.length === 0,
-  message:
-    reviews.length === 0
-      ? "No reviews for this listing yet.Creat your first review."
-      : "Reviews fetched successfully",
-    };
+      }
+    );
 
     setCache(cacheKey, response, 30);
     res.status(200).json(response);
   } catch (error) {
     console.error("Get reviews error:", error);
-    res.status(500).json({ message: "Failed to fetch reviews" });
+    throw new AppError("Failed to fetch reviews", 500);
   }
 };
 
