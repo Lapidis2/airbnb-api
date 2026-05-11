@@ -12,6 +12,12 @@ enum Role {
   ADMIN
 }
 
+enum HostStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum ListingType {
   APARTMENT
   HOUSE
@@ -44,6 +50,7 @@ model User {
   username  String   @unique
   phone     String
   role      Role     @default(GUEST)
+  hostStatus HostStatus?
   avatar    String?
   avatarPublicId    String?
   bio       String?

@@ -43,18 +43,21 @@ const existingUser = await prisma.user.findFirst({
     throw new AppError("User already exists", 409);
   }
 
-  const hashedpassword = await bcrypt.hash(password, 10);
+   const hashedpassword = await bcrypt.hash(password, 10);
 
-   const user = await prisma.user.create({
-     data: {
-       name,
-       email,
-       username,
-       password: hashedpassword,
-       role: role === "HOST" ? "HOST" : "GUEST",
-       phone,
-     },
-   });
+   const userRole = role === "HOST" ? "HOST" : role === "GUEST" ? "GUEST" : "ADMIN";
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        username,
+        password: hashedpassword,
+        role: userRole,
+        hostStatus: userRole === "HOST" ? "PENDING" : null,
+        phone,
+      },
+    });
 
    clearUserStatsCache();
 

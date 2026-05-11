@@ -6,6 +6,7 @@ import bookingsRouter from "./bookings.routes.js";
 import reviewsRouter from "./reviews.routes.js";
 import aiRouter from "./ai.routes.js";
 import statisticsRouter from "./statistics.routes.js";
+import adminRouter from "./admin.routes.js";
 
 const v1Router = Router();
 
@@ -16,5 +17,6 @@ v1Router.use("/bookings", bookingsRouter);
 v1Router.use("/reviews", reviewsRouter);
 v1Router.use("/ai", aiRouter);
 v1Router.use("/statistics", statisticsRouter);
+v1Router.use("/admin", adminRouter);
 
 export default v1Router;

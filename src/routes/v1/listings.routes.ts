@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../../middlewares/auth.middleware";
+import { authenticate, requireHost } from "../../middlewares/auth.middleware";
 import {
   getAllListings,
   getSingleListing,
@@ -104,7 +104,7 @@ route.get("/:id", getSingleListing as any);
  *       400:
  *         description: Validation error
  */
-route.post("/", authenticate, createListing as any);
+route.post("/", authenticate, requireHost, createListing as any);
 /**
  * @swagger
  * /api/v1/listings/{id}:
@@ -135,7 +135,7 @@ route.post("/", authenticate, createListing as any);
  *       404:
  *         description: Listing not found
  */
-route.put("/:id", authenticate, updateListing as any);
+route.put("/:id", authenticate, requireHost, updateListing as any);
 /**
  * @swagger
  * /api/v1/listings/{id}:
@@ -160,6 +160,6 @@ route.put("/:id", authenticate, updateListing as any);
  *       404:
  *         description: Listing not found
  */
-route.delete("/:id", authenticate, deleteListing as any);
+route.delete("/:id", authenticate, requireHost, deleteListing as any);
 
 export default route;
