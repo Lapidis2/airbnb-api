@@ -199,7 +199,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 if (!process.env.FRONTEND_URL) {
   throw new Error("FRONTEND_URL missing");
 }
-    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password/${rawToken}`;
+    const resetLink = `airbnbreactnativeapp://auth/reset-password/${rawToken}`;
 
 
 
