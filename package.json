@@ -27,8 +27,10 @@
     "@langchain/groq": "^1.2.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@sendgrid/mail": "^8.1.6",
     "@types/bcrypt": "^6.0.0",
     "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
@@ -38,7 +40,6 @@
     "@types/pg": "^8.20.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "@types/cors": "^2.8.19",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
     "compression": "^1.8.1",
@@ -57,7 +58,6 @@
     "swagger-ui-express": "^5.0.1",
     "typescript": "^5.4.5",
     "zod": "^4.3.6"
-    
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
