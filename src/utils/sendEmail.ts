@@ -6,6 +6,10 @@ export const sendEmail = async (to: string, subject: string, text: string) => {
     throw new Error("Email service not configured");
   }
 
+  console.log(`[EMAIL] Attempting to send to: ${to}`);
+  console.log(`[EMAIL] From: ${process.env.EMAIL_USER}`);
+  console.log(`[EMAIL] Using Gmail service`);
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -18,16 +22,25 @@ export const sendEmail = async (to: string, subject: string, text: string) => {
   });
 
   try {
+    // Verify connection
+    await transporter.verify();
+    console.log(`[EMAIL] SMTP connection verified`);
+
     const result = await transporter.sendMail({
       from: `"Airbnb Clone" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html: text
     });
-    console.log(`Email sent successfully to ${to}`);
+    console.log(`[EMAIL] Email sent successfully to ${to}`);
+    console.log(`[EMAIL] Message ID: ${result.messageId}`);
     return result;
   } catch (error) {
-    console.error("sendEmail error:", error);
+    console.error(`[EMAIL] Failed to send email:`, error);
+    if (error instanceof Error) {
+      console.error(`[EMAIL] Error message: ${error.message}`);
+      console.error(`[EMAIL] Error stack: ${error.stack}`);
+    }
     throw error;
   }
 };
