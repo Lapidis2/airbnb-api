@@ -20,7 +20,8 @@ const router = Router();
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         description: The user ID
  *     requestBody:
  *       required: true
@@ -74,7 +75,8 @@ const router = Router();
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
+ *           type: string
+ *           format: uuid
  *         description: The user ID
  *     responses:
  *       200:

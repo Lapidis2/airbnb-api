@@ -2,8 +2,10 @@ import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import type { Express, Request, Response } from "express";
 import path from "path";
-const isProduction = process.env["NODE_ENV"] === "production";
-const PRODUCTION_URL = isProduction ? (process.env["API_URL"] || "https://airbnb-api-c4yx.onrender.com/") : "http://localhost:3000/";
+
+const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === "production";
+
 const options: swaggerJSDoc.Options = {
   definition: {
     openapi: "3.0.0",
@@ -12,16 +14,16 @@ const options: swaggerJSDoc.Options = {
       version: "1.0.0",
       description: "Full API documentation for Airbnb clone with users, listings, and bookings.",
     },
-servers: [
-  {
-    url: "http://localhost:3000/",
-    description: "Local Development",
-  },
-  {
-    url: "https://airbnb-api-c4yx.onrender.com/",
-    description: "Production",
-  },
-],
+    servers: [
+      {
+        url: "http://localhost:3000",
+        description: "Local Development",
+      },
+      {
+        url: "https://airbnb-api-c4yx.onrender.com",
+        description: "Production",
+      },
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -50,5 +52,8 @@ export function setupSwagger(app: Express): void {
     swaggerUrl: "/api-docs.json",
   }));
 
-  console.log(`Swagger docs available at ${PRODUCTION_URL}api-docs`);
+  const serverUrl = isProduction 
+    ? "https://airbnb-api-c4yx.onrender.com" 
+    : `http://localhost:${PORT}`;
+  console.log(`Swagger docs available at ${serverUrl}/api-docs`);
 }
