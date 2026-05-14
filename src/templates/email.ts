@@ -24,6 +24,7 @@ export const welcomeEmail = (name: string, role: string) => {
 export const passwordResetEmail = (
   name: string,
   resetLink: string,
+  deepLink: string,
   token: string
 ) => {
   return `
@@ -36,7 +37,12 @@ export const passwordResetEmail = (
        style="padding:10px 20px;background:red;color:#fff;text-decoration:none;border-radius:5px;">
       Reset Password
     </a>
-    
+    <p style="margin-top:10px;">
+  Open in app: 
+  <a href="${deepLink}">
+    Click here
+  </a>
+</p>
     <p>Or copy this token:</p>
     <code style="background:#f4f4f4;padding:5px;border-radius:4px;">
       ${token}

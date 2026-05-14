@@ -199,8 +199,8 @@ export const forgotPassword = async (req: Request, res: Response) => {
 if (!process.env.FRONTEND_URL) {
   throw new Error("FRONTEND_URL missing");
 }
-    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password/${rawToken}`;
-
+const deepLink = `airbnbreactnativeapp://reset-password?token=${rawToken}`;
+const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password/${rawToken}`;
 
 
     setImmediate(async () => {
@@ -208,7 +208,7 @@ if (!process.env.FRONTEND_URL) {
         await sendEmail(
           user.email,
           "Password Reset Request",
-          passwordResetEmail(user.name, resetLink, rawToken)
+          passwordResetEmail(user.name, resetLink, rawToken,deepLink)
         );
         console.log(`[FORGOT PASSWORD] Email sent successfully to: ${user.email}`);
       } catch (err) {
