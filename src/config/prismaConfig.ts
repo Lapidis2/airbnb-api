@@ -8,6 +8,10 @@ const connectionString = isDevelopment && process.env.localDbUrl
   ? process.env.localDbUrl
   : process.env.DATABASE_URL;
 
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not defined in environment variables");
+}
+
 const pool = new Pool({
   connectionString,
   max: 10,
@@ -19,8 +23,13 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 export async function connectDB() {
-  await prisma.$connect();
-  console.log(`Database connected successfully. (${isDevelopment ? "local" : "Neon"})`);
+  try {
+    await prisma.$connect();
+    console.log(`Database connected successfully. (${isDevelopment ? "local" : "production"})`);
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    throw error;
+  }
 }
 
 export default prisma;

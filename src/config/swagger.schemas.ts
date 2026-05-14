@@ -119,6 +119,42 @@
  *         createdAt:
  *           type: string
  *           format: date-time
+ *     Review:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           example: "a3f8c2d1-4b5e-4f6a-8c9d-1e2f3a4b5c6d"
+ *         rating:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 5
+ *           example: 5
+ *         comment:
+ *           type: string
+ *           example: "Great place to stay!"
+ *         userId:
+ *           type: string
+ *           format: uuid
+ *         listingId:
+ *           type: string
+ *           format: uuid
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *     CreateReviewInput:
+ *       type: object
+ *       required: [rating, comment]
+ *       properties:
+ *         rating:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 5
+ *           example: 5
+ *         comment:
+ *           type: string
+ *           example: "Amazing experience!"
  *     RegisterInput:
  *       type: object
  *       required: [name, email, username, phone, password, role]
@@ -199,17 +235,26 @@
  *             type: string
  *     CreateBookingInput:
  *       type: object
- *       required: [listingId, checkIn, checkOut]
+ *       required: [listingId, checkIn, checkOut, userId, guests]
  *       properties:
+ *         userId:
+ *           type: string
+ *           format: uuid
  *         listingId:
  *           type: string
  *           format: uuid
  *         checkIn:
  *           type: string
- *           format: date-time
+ *           format: date
+ *           example: "2025-06-01"
  *         checkOut:
  *           type: string
- *           format: date-time
+ *           format: date
+ *           example: "2025-06-05"
+ *         guests:
+ *           type: integer
+ *           minimum: 1
+ *           example: 2
  *     UpdateUserInput:
  *       type: object
  *       properties:
