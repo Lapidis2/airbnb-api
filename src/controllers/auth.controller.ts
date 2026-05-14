@@ -196,8 +196,10 @@ export const forgotPassword = async (req: Request, res: Response) => {
         resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000),
       },
     });
-
-    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password/${rawToken}`;
+if (!process.env.FRONTEND_URL) {
+  throw new Error("FRONTEND_URL missing");
+}
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password/${rawToken}`;
 
 
 
