@@ -8,7 +8,7 @@ const router = Router();
 
 /**
  * @swagger
- * /users/{id}/avatar:
+ * /api/v1/users/{id}/avatar:
  *   post:
  *     summary: Upload user avatar
  *     description: Upload a profile picture for a user. Supports jpeg, png, webp. Max 5MB. Requires authentication.
@@ -63,7 +63,7 @@ const router = Router();
   );
   /**
  * @swagger
- * /users/{id}/avatar:
+ * /api/v1/users/{id}/avatar:
  *   delete:
  *     summary: Delete user avatar
  *     description: Delete the user's profile picture. Requires authentication.
@@ -104,7 +104,7 @@ router.delete(
 
 /**
  * @swagger
- * /users/{id}/listing-photos:
+ * /api/v1/users/{id}/listing-photos:
  *   post:
  *     summary: Upload listing photos
  *     description: Upload up to 10 photos for a listing. Requires authentication.

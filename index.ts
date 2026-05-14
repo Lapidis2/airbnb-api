@@ -37,9 +37,8 @@ app.get("/health", (req: Request, res: Response) => {
 app.use("/api/v1", v1Router);
 
 app.use("/api/v1/reviews", reviewsRouter);
+app.use("/api/v1/users", uploadRouter);
 app.use("/api/v2/users", v2UserRouter);
-
-app.use("/users", uploadRouter);
 
 
 setupSwagger(app);
