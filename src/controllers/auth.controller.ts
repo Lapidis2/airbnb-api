@@ -199,16 +199,13 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password/${rawToken}`;
 
-    console.log(`[FORGOT PASSWORD] Attempting to send email to: ${user.email}`);
-    console.log(`[FORGOT PASSWORD] Reset link: ${resetLink}`);
-    console.log(`[FORGOT PASSWORD] EMAIL_USER configured: ${!!process.env.EMAIL_USER}`);
-    console.log(`[FORGOT PASSWORD] EMAIL_PASS configured: ${!!process.env.EMAIL_PASS}`);
+
 
     setImmediate(async () => {
       try {
         await sendEmail(
           user.email,
-          "Reset Password",
+          "Password Reset Request",
           passwordResetEmail(user.name, resetLink, rawToken)
         );
         console.log(`[FORGOT PASSWORD] Email sent successfully to: ${user.email}`);
