@@ -56,6 +56,78 @@ export const passwordResetEmail = (
 
 
 
+export const bookingRequestEmail = (
+  hostName: string,
+  guestName: string,
+  listingTitle: string,
+  checkIn: string,
+  checkOut: string
+) => {
+  return `
+  <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+    <h2>New Booking Request</h2>
+    <p>Hi ${hostName},</p>
+    <p><strong>${guestName}</strong> has requested to book your listing: <strong>${listingTitle}</strong></p>
+    
+    <p><strong>Check-in:</strong> ${checkIn}</p>
+    <p><strong>Check-out:</strong> ${checkOut}</p>
+    
+    <p>Please log in to your dashboard to approve or reject this request.</p>
+  </div>
+  `;
+};
+
+export const bookingApprovedEmail = (
+  guestName: string,
+  listingTitle: string,
+  checkIn: string,
+  checkOut: string,
+  totalPrice: number
+) => {
+  return `
+  <div style="font-family: Arial, sans-serif; padding: 20px;">
+    <h2>Booking Approved ✅</h2>
+    <p>Hi ${guestName},</p>
+    <p>Your booking for <strong>${listingTitle}</strong> has been approved!</p>
+    
+    <p>Check-in: ${checkIn}</p>
+    <p>Check-out: ${checkOut}</p>
+    <h3>Total: $${totalPrice}</h3>
+    
+    <p>You can now proceed with payment.</p>
+  </div>
+  `;
+};
+
+export const bookingRejectedEmail = (
+  guestName: string,
+  listingTitle: string
+) => {
+  return `
+  <div style="font-family: Arial, sans-serif; padding: 20px;">
+    <h2>Booking Request Rejected</h2>
+    <p>Hi ${guestName},</p>
+    <p>Unfortunately, your booking request for <strong>${listingTitle}</strong> has been rejected by the host.</p>
+    <p>You may try booking different dates or another listing.</p>
+  </div>
+  `;
+};
+
+export const paymentSuccessEmail = (
+  guestName: string,
+  listingTitle: string,
+  totalPrice: number
+) => {
+  return `
+  <div style="font-family: Arial, sans-serif; padding: 20px;">
+    <h2>Payment Successful 🎉</h2>
+    <p>Hi ${guestName},</p>
+    <p>Your payment of <strong>$${totalPrice}</strong> for <strong>${listingTitle}</strong> has been received.</p>
+    <p>Thank you for booking with us!</p>
+  </div>
+  `;
+};
+
 export const bookingConfirmationEmail = (
   name: string,
   title: string,

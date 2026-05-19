@@ -9,6 +9,10 @@ import {
   getUserBookings,
   confirmBooking,
   cancelBooking,
+  approveBooking,
+  rejectBooking,
+  payBooking,
+  getHostBookings,
 } from "../../controllers/booking.controller";
 
 const route = Router();
@@ -208,5 +212,13 @@ route.post("/:id/confirm", authenticate, confirmBooking as any);
  *         description: Booking not found
  */
 route.post("/:id/cancel", authenticate, cancelBooking as any);
+
+// Host approval workflow
+route.patch("/:id/approve", authenticate, approveBooking as any);
+route.patch("/:id/reject", authenticate, rejectBooking as any);
+route.patch("/:id/pay", authenticate, payBooking as any);
+
+// Host-specific bookings
+route.get("/host", authenticate, getHostBookings as any);
 
 export default route;

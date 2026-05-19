@@ -1,8 +1,10 @@
 import "dotenv/config";
-import express, { NextFunction } from "express";
+import express from "express";
 import { Request, Response } from "express";
 import compression from "compression";
 import morgan from "morgan";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import v1Router from "./src/routes/v1/index.js";
 import v2UserRouter from "./src/routes/v2/user.routes.js";
 import uploadRouter from "./src/routes/v1/upload.routes.js";
@@ -12,7 +14,29 @@ import { setupSwagger } from "./src/config/swagger.js";
 import cors from "cors";
 import { errorHandler } from "./src/middlewares/error.middleware.js";
 import { AppError } from "./src/errors/AppError.js";
+
 const app = express();
+const httpServer = createServer(app);
+export const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+  },
+});
+
+// Socket.IO connection handling
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("join", (userId: string) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined their room`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
 app.use(cors());
 app.use(
   process.env["NODE_ENV"] === "production"
@@ -73,7 +97,7 @@ app.use(errorHandler);
 const main = async () => {
   await connectDB();
 
-  app.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
     console.log(`Health check: http://localhost:${PORT}/health`);

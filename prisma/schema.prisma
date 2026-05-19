@@ -28,7 +28,15 @@ enum ListingType {
 enum BookingStatus {
   PENDING
   CONFIRMED
+  REJECTED
   CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
 }
 
 model ListingPhoto {
@@ -62,6 +70,7 @@ model User {
 
   listings  Listing[]
   bookings  Booking[]
+  notifications Notification[]
   @@index([name])
   @@index([role])
   reviews Review[]
@@ -93,18 +102,20 @@ model Listing {
 }
 
 model Booking {
-  id         String           @id @default(uuid())
-  checkIn    DateTime
-  checkOut   DateTime
-  totalPrice Float
-  status     BookingStatus    @default(PENDING)
-  createdAt  DateTime @default(now())
+  id            String           @id @default(uuid())
+  checkIn       DateTime
+  checkOut      DateTime
+  totalPrice    Float
+  status        BookingStatus    @default(PENDING)
+  paymentStatus PaymentStatus    @default(UNPAID)
+  createdAt     DateTime         @default(now())
 
   guest     User    @relation(fields: [guestId], references: [id], onDelete: Cascade)
   guestId   String
 
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId String
+
   @@index([guestId])
   @@index([listingId])
   @@index([status])
@@ -122,5 +133,20 @@ model Review {
 
   @@index([userId])
   @@index([listingId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("BOOKING")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
 }
 

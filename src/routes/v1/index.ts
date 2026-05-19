@@ -5,6 +5,7 @@ import listingsRouter from "./listings.routes.js";
 import bookingsRouter from "./bookings.routes.js";
 import reviewsRouter from "./reviews.routes.js";
 import aiRouter from "./ai.routes.js";
+import notificationsRouter from "./notifications.routes.js";
 import statisticsRouter from "./statistics.routes.js";
 import adminRouter from "./admin.routes.js";
 
@@ -18,5 +19,6 @@ v1Router.use("/reviews", reviewsRouter);
 v1Router.use("/ai", aiRouter);
 v1Router.use("/statistics", statisticsRouter);
 v1Router.use("/admin", adminRouter);
+v1Router.use("/notifications", notificationsRouter);
 
 export default v1Router;

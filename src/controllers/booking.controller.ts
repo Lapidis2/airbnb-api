@@ -2,10 +2,17 @@ import { Request, Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
 import prisma from "../config/prismaConfig";
-import { bookingConfirmationEmail } from "../templates/email";
+import {
+  bookingConfirmationEmail,
+  bookingRequestEmail,
+  bookingApprovedEmail,
+  bookingRejectedEmail,
+  paymentSuccessEmail,
+} from "../templates/email";
 import { sendEmail } from "../utils/sendEmail";
 import { createSuccessResponse } from "../utils/apiResponse";
 import { AppError } from "../errors/AppError";
+import { createNotification } from "../services/notification.service";
 
 export const createBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -57,6 +64,11 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
       throw new AppError(`This listing only accommodates up to ${listing.guests} guests`, 400);
     }
 
+    // Prevent host from booking their own listing
+    if (listing.hostId === req.userId) {
+      throw new AppError("You cannot book your own listing", 400);
+    }
+
     const overlap = await prisma.booking.findFirst({
       where: {
         listingId,
@@ -101,27 +113,35 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
 
     res.status(201).json(createSuccessResponse(booking, "Booking created successfully"));
 
+    // Notify host + send email
     setImmediate(async () => {
       try {
-        if (user && listing) {
+        const host = await prisma.user.findUnique({ where: { id: listing.hostId } });
+        if (host) {
+          await createNotification({
+            userId: host.id,
+            title: "New Booking Request",
+            message: `${user.name} wants to book ${listing.title}`,
+            type: "BOOKING",
+          });
+
           const formattedCheckIn = new Date(booking.checkIn).toDateString();
           const formattedCheckOut = new Date(booking.checkOut).toDateString();
 
           await sendEmail(
-            user.email,
-            "Booking Confirmed 🎉",
-            bookingConfirmationEmail(
+            host.email,
+            "New Booking Request",
+            bookingRequestEmail(
+              host.name,
               user.name,
               listing.title,
-              listing.location,
               formattedCheckIn,
-              formattedCheckOut,
-              booking.totalPrice
+              formattedCheckOut
             )
           );
         }
       } catch (error) {
-        console.error("Booking email failed:", error);
+        console.error("Host notification failed:", error);
       }
     });
   } catch (error) {
@@ -355,6 +375,173 @@ export const cancelBooking = async (req: AuthRequest, res: Response): Promise<vo
     if (error instanceof AppError) throw error;
     console.error(error);
     throw new AppError("Failed to cancel booking", 500);
+  }
+};
+
+/**
+ * APPROVE BOOKING (Host only)
+ */
+export const approveBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const bookingId = req.params.id as string;
+    const hostId = req.userId!;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { listing: true, guest: true },
+    });
+
+    if (!booking) throw new AppError("Booking not found", 404);
+    if (booking.listing.hostId !== hostId) throw new AppError("Not authorized", 403);
+    if (booking.status !== "PENDING") throw new AppError("Booking is not pending", 400);
+
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: "CONFIRMED" },
+    });
+
+    // Notify guest
+    await createNotification({
+      userId: booking.guestId,
+      title: "Booking Approved",
+      message: `Your booking for ${booking.listing.title} has been approved.`,
+      type: "BOOKING",
+    });
+
+    // Send email
+    const formattedCheckIn = new Date(booking.checkIn).toDateString();
+    const formattedCheckOut = new Date(booking.checkOut).toDateString();
+
+    await sendEmail(
+      booking.guest.email,
+      "Booking Approved",
+      bookingApprovedEmail(
+        booking.guest.name,
+        booking.listing.title,
+        formattedCheckIn,
+        formattedCheckOut,
+        booking.totalPrice
+      )
+    );
+
+    res.status(200).json(createSuccessResponse(updated, "Booking approved successfully"));
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error(error);
+    throw new AppError("Failed to approve booking", 500);
+  }
+};
+
+/**
+ * REJECT BOOKING (Host only)
+ */
+export const rejectBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const bookingId = req.params.id as string;
+    const hostId = req.userId!;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { listing: true, guest: true },
+    });
+
+    if (!booking) throw new AppError("Booking not found", 404);
+    if (booking.listing.hostId !== hostId) throw new AppError("Not authorized", 403);
+    if (booking.status !== "PENDING") throw new AppError("Only pending bookings can be rejected", 400);
+
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: "REJECTED" },
+    });
+
+    await createNotification({
+      userId: booking.guestId,
+      title: "Booking Rejected",
+      message: `Your booking for ${booking.listing.title} was rejected.`,
+      type: "BOOKING",
+    });
+
+    await sendEmail(
+      booking.guest.email,
+      "Booking Request Rejected",
+      bookingRejectedEmail(booking.guest.name, booking.listing.title)
+    );
+
+    res.status(200).json(createSuccessResponse(updated, "Booking rejected"));
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error(error);
+    throw new AppError("Failed to reject booking", 500);
+  }
+};
+
+/**
+ * MARK PAYMENT AS PAID
+ */
+export const payBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const bookingId = req.params.id as string;
+    const userId = req.userId!;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { listing: true, guest: true },
+    });
+
+    if (!booking) throw new AppError("Booking not found", 404);
+    if (booking.guestId !== userId) throw new AppError("Not authorized", 403);
+    if (booking.paymentStatus === "PAID") throw new AppError("Already paid", 400);
+
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { paymentStatus: "PAID" },
+    });
+
+    // Notify host
+    await createNotification({
+      userId: booking.listing.hostId,
+      title: "Payment Received",
+      message: `Payment received for booking of ${booking.listing.title}`,
+      type: "PAYMENT",
+    });
+
+    // Send confirmation email to guest
+    await sendEmail(
+      booking.guest.email,
+      "Payment Successful",
+      paymentSuccessEmail(booking.guest.name, booking.listing.title, booking.totalPrice)
+    );
+
+    res.status(200).json(createSuccessResponse(updated, "Payment successful"));
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error(error);
+    throw new AppError("Failed to process payment", 500);
+  }
+};
+
+/**
+ * GET BOOKINGS FOR HOST (Host's listings)
+ */
+export const getHostBookings = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const hostId = req.userId!;
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        listing: { hostId },
+      },
+      include: {
+        guest: { select: { id: true, name: true, email: true } },
+        listing: { select: { id: true, title: true, location: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.status(200).json(createSuccessResponse(bookings, "Host bookings retrieved"));
+  } catch (error) {
+    console.error(error);
+    throw new AppError("Failed to fetch host bookings", 500);
   }
 };
 
