@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { searchListingsWithAI } from "../services/ai/search.service";
 // import { generateDescription } from "../services/ai/description.service";
-// import { sendChatMessage } from "../services/ai/chat.service";
+import { sendChatMessage } from "../services/ai/chat.service";
 // import { getRecommendations } from "../services/recommendation/recommendation.service";
 // import { getReviewSummary } from "../services/ai/review-summary.service";
 import { AppError } from "../errors/AppError";
@@ -51,7 +51,45 @@ export const generateDescriptionController = async (
 };
 
 export const chatWithAI = async (req: Request, res: Response): Promise<void> => {
-  res.status(503).json({ message: "AI chat temporarily disabled" });
+  try {
+    const { message, conversationId, listingId } = req.body;
+
+    if (!message || typeof message !== "string") {
+      throw new AppError("Message is required and must be a string", 400);
+    }
+
+    const sessionId = conversationId || `chat_${Date.now()}`;
+
+    const result = await sendChatMessage(sessionId, message, listingId);
+
+    res.status(200).json({
+      success: true,
+      message: "AI response generated",
+      data: {
+        response: result.response,
+        sessionId: result.sessionId,
+        messageCount: result.messageCount,
+      },
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    } else if ((error as any).statusCode) {
+      res.status((error as any).statusCode).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    } else {
+      console.error("Chat error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to get AI response",
+      });
+    }
+  }
 };
 
 export const getRecommendationsController = async (
