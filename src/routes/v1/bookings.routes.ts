@@ -7,6 +7,8 @@ import {
   updateBooking,
   deleteBooking,
   getUserBookings,
+  confirmBooking,
+  cancelBooking,
 } from "../../controllers/booking.controller";
 
 const route = Router();
@@ -156,5 +158,55 @@ route.delete("/:id", authenticate, deleteBooking as any);
  *         description: User not found
  */
 route.get("/user/:id", authenticate, getUserBookings as any);
+
+/**
+ * @swagger
+ * /api/v1/bookings/{id}/confirm:
+ *   post:
+ *     summary: Confirm a booking
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Confirm a pending booking
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID
+ *     responses:
+ *       200:
+ *         description: Booking confirmed successfully
+ *       400:
+ *         description: Invalid state transition
+ *       404:
+ *         description: Booking not found
+ */
+route.post("/:id/confirm", authenticate, confirmBooking as any);
+
+/**
+ * @swagger
+ * /api/v1/bookings/{id}/cancel:
+ *   post:
+ *     summary: Cancel a booking
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Cancel a booking (pending or confirmed)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID
+ *     responses:
+ *       200:
+ *         description: Booking cancelled successfully
+ *       404:
+ *         description: Booking not found
+ */
+route.post("/:id/cancel", authenticate, cancelBooking as any);
 
 export default route;

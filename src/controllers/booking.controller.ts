@@ -88,7 +88,14 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
       },
       include: {
         guest: { select: { id: true, name: true, email: true } },
-        listing: { select: { id: true, title: true, location: true } },
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            location: true,
+            host: { select: { id: true, name: true, email: true } },
+          },
+        },
       },
     });
 
@@ -138,7 +145,14 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
         take: limit,
         include: {
           guest: { select: { id: true, name: true, email: true } },
-          listing: { select: { id: true, title: true, location: true } },
+          listing: {
+            select: {
+              id: true,
+              title: true,
+              location: true,
+              host: { select: { id: true, name: true, email: true } },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       }),
@@ -175,8 +189,12 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
     const booking = await prisma.booking.findUnique({
       where: { id },
       include: {
-        guest: true,
-        listing: true,
+        guest: { select: { id: true, name: true, email: true } },
+        listing: {
+          include: {
+            host: { select: { id: true, name: true, email: true } },
+          },
+        },
       },
     });
 
@@ -280,6 +298,66 @@ export const deleteBooking = async (req: Request, res: Response): Promise<void> 
   }
 }
 
+export const confirmBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+
+    const booking = await prisma.booking.findUnique({ where: { id } });
+
+    if (!booking) {
+      throw new AppError("Booking not found", 404);
+    }
+
+    if (booking.status === "CONFIRMED") {
+      res.status(200).json(createSuccessResponse(booking, "Booking already confirmed"));
+      return;
+    }
+
+    if (booking.status === "CANCELLED") {
+      throw new AppError("Cannot confirm a cancelled booking", 400);
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: { status: "CONFIRMED" },
+    });
+
+    res.status(200).json(createSuccessResponse(updated, "Booking confirmed successfully"));
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error(error);
+    throw new AppError("Failed to confirm booking", 500);
+  }
+};
+
+export const cancelBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+
+    const booking = await prisma.booking.findUnique({ where: { id } });
+
+    if (!booking) {
+      throw new AppError("Booking not found", 404);
+    }
+
+    if (booking.status === "CANCELLED") {
+      res.status(200).json(createSuccessResponse(booking, "Booking already cancelled"));
+      return;
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: { status: "CANCELLED" },
+    });
+
+    res.status(200).json(createSuccessResponse(updated, "Booking cancelled successfully"));
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error(error);
+    throw new AppError("Failed to cancel booking", 500);
+  }
+};
+
 export const getUserBookings = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id as string;
@@ -316,6 +394,7 @@ export const getUserBookings = async (req: Request, res: Response): Promise<void
               title: true,
               location: true,
               pricePerNight: true,
+              host: { select: { id: true, name: true, email: true } },
             },
           },
         },
