@@ -1,5 +1,4 @@
 import prisma from "../config/prismaConfig";
-import { io } from "../../index"; 
 
 export interface CreateNotificationInput {
   userId: string;
@@ -18,12 +17,23 @@ export const createNotification = async (input: CreateNotificationInput) => {
     },
   });
 
-  // Emit real-time notification
-  if (io) {
-    io.to(input.userId).emit("new_notification", notification);
-  }
-
+  console.log(`[NOTIFICATION] Created for user ${input.userId}: ${input.title}`);
   return notification;
+};
+
+export const emitNotification = (userId: string, notification: any) => {
+  try {
+    const { io } = require("../../index");
+    
+    if (io) {
+      io.to(userId).emit("new_notification", notification);
+      console.log(`[SOCKET] Emitted new_notification to user ${userId}`);
+    } else {
+      console.log(`[SOCKET] io not available - notification saved in DB only`);
+    }
+  } catch (error) {
+    console.log(`[SOCKET] Failed to emit to ${userId} - notification saved in DB`);
+  }
 };
 
 export const getUserNotifications = async (userId: string) => {

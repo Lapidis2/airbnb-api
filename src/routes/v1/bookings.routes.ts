@@ -60,6 +60,22 @@ route.post("/", authenticate, createBooking);
  *                 $ref: '#/components/schemas/Booking'
  */
 route.get("/", authenticate, getAllBookings as any);
+
+/**
+ * @swagger
+ * /api/v1/bookings/host:
+ *   get:
+ *     summary: Get all bookings for host's listings
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Retrieve all bookings received for the authenticated host's listings
+ *     responses:
+ *       200:
+ *         description: Host bookings retrieved successfully
+ */
+route.get("/host", authenticate, getHostBookings as any);
+
 /**
  * @swagger
  * /api/v1/bookings/{id}:
@@ -213,12 +229,88 @@ route.post("/:id/confirm", authenticate, confirmBooking as any);
  */
 route.post("/:id/cancel", authenticate, cancelBooking as any);
 
-// Host approval workflow
+/**
+ * @swagger
+ * /api/v1/bookings/{id}/approve:
+ *   patch:
+ *     summary: Approve a booking (Host only)
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Approve a pending booking. Only the listing host can perform this action.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID
+ *     responses:
+ *       200:
+ *         description: Booking approved successfully
+ *       400:
+ *         description: Booking is not in PENDING state
+ *       403:
+ *         description: Not authorized (only host can approve)
+ *       404:
+ *         description: Booking not found
+ */
 route.patch("/:id/approve", authenticate, approveBooking as any);
-route.patch("/:id/reject", authenticate, rejectBooking as any);
-route.patch("/:id/pay", authenticate, payBooking as any);
 
-// Host-specific bookings
-route.get("/host", authenticate, getHostBookings as any);
+/**
+ * @swagger
+ * /api/v1/bookings/{id}/reject:
+ *   patch:
+ *     summary: Reject a booking (Host only)
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Reject a pending booking. Only the listing host can perform this action.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID
+ *     responses:
+ *       200:
+ *         description: Booking rejected successfully
+ *       400:
+ *         description: Only pending bookings can be rejected
+ *       403:
+ *         description: Not authorized (only host can reject)
+ *       404:
+ *         description: Booking not found
+ */
+route.patch("/:id/reject", authenticate, rejectBooking as any);
+
+/**
+ * @swagger
+ * /api/v1/bookings/{id}/pay:
+ *   patch:
+ *     summary: Mark booking as paid
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Mark payment as successful for a confirmed booking (Guest only)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID
+ *     responses:
+ *       200:
+ *         description: Payment successful
+ *       400:
+ *         description: Already paid or invalid state
+ *       403:
+ *         description: Not authorized (only guest can pay)
+ *       404:
+ *         description: Booking not found
+ */
+route.patch("/:id/pay", authenticate, payBooking as any);
 
 export default route;

@@ -25,15 +25,15 @@ export const io = new Server(httpServer, {
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("[SOCKET] User connected:", socket.id);
 
   socket.on("join", (userId: string) => {
     socket.join(userId);
-    console.log(`User ${userId} joined their room`);
+    console.log(`[SOCKET] User ${userId} joined room for real-time notifications`);
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    console.log("[SOCKET] User disconnected:", socket.id);
   });
 });
 

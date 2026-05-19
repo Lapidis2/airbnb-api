@@ -12,7 +12,7 @@ import {
 import { sendEmail } from "../utils/sendEmail";
 import { createSuccessResponse } from "../utils/apiResponse";
 import { AppError } from "../errors/AppError";
-import { createNotification } from "../services/notification.service";
+import { createNotification, emitNotification } from "../services/notification.service";
 
 export const createBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -118,12 +118,13 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
       try {
         const host = await prisma.user.findUnique({ where: { id: listing.hostId } });
         if (host) {
-          await createNotification({
+          const notif = await createNotification({
             userId: host.id,
             title: "New Booking Request",
             message: `${user.name} wants to book ${listing.title}`,
             type: "BOOKING",
           });
+          emitNotification(host.id, notif);
 
           const formattedCheckIn = new Date(booking.checkIn).toDateString();
           const formattedCheckOut = new Date(booking.checkOut).toDateString();
@@ -378,9 +379,7 @@ export const cancelBooking = async (req: AuthRequest, res: Response): Promise<vo
   }
 };
 
-/**
- * APPROVE BOOKING (Host only)
- */
+
 export const approveBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const bookingId = req.params.id as string;
@@ -400,31 +399,50 @@ export const approveBooking = async (req: AuthRequest, res: Response): Promise<v
       data: { status: "CONFIRMED" },
     });
 
-    // Notify guest
-    await createNotification({
+    // Notify guest (real-time)
+    const notification = await createNotification({
       userId: booking.guestId,
       title: "Booking Approved",
       message: `Your booking for ${booking.listing.title} has been approved.`,
       type: "BOOKING",
     });
-
-    // Send email
-    const formattedCheckIn = new Date(booking.checkIn).toDateString();
-    const formattedCheckOut = new Date(booking.checkOut).toDateString();
-
-    await sendEmail(
-      booking.guest.email,
-      "Booking Approved",
-      bookingApprovedEmail(
-        booking.guest.name,
-        booking.listing.title,
-        formattedCheckIn,
-        formattedCheckOut,
-        booking.totalPrice
-      )
-    );
+    emitNotification(booking.guestId, notification);
 
     res.status(200).json(createSuccessResponse(updated, "Booking approved successfully"));
+
+    // Send email in background
+    setImmediate(async () => {
+      console.log(`[EMAIL DEBUG] Approval flow started for guest: ${booking.guest.email}`);
+      console.log(`[EMAIL DEBUG] Guest name: ${booking.guest.name}`);
+      console.log(`[EMAIL DEBUG] Listing title: ${booking.listing.title}`);
+
+      try {
+        const formattedCheckIn = new Date(booking.checkIn).toDateString();
+        const formattedCheckOut = new Date(booking.checkOut).toDateString();
+
+        const emailHtml = bookingApprovedEmail(
+          booking.guest.name,
+          booking.listing.title,
+          formattedCheckIn,
+          formattedCheckOut,
+          booking.totalPrice
+        );
+
+        console.log(`[EMAIL DEBUG] Sending approval email now...`);
+
+        await sendEmail(
+          booking.guest.email,
+          "Booking Approved",
+          emailHtml
+        );
+
+        console.log(`[EMAIL SUCCESS] Approval email sent to ${booking.guest.email}`);
+      } catch (error: any) {
+        console.error("[EMAIL ERROR] Approval email failed:");
+        console.error("Error message:", error?.message);
+        console.error("Full error:", error);
+      }
+    });
   } catch (error) {
     if (error instanceof AppError) throw error;
     console.error(error);
@@ -432,9 +450,6 @@ export const approveBooking = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
-/**
- * REJECT BOOKING (Host only)
- */
 export const rejectBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const bookingId = req.params.id as string;
@@ -454,20 +469,43 @@ export const rejectBooking = async (req: AuthRequest, res: Response): Promise<vo
       data: { status: "REJECTED" },
     });
 
-    await createNotification({
+    const rejectNotif = await createNotification({
       userId: booking.guestId,
       title: "Booking Rejected",
       message: `Your booking for ${booking.listing.title} was rejected.`,
       type: "BOOKING",
     });
-
-    await sendEmail(
-      booking.guest.email,
-      "Booking Request Rejected",
-      bookingRejectedEmail(booking.guest.name, booking.listing.title)
-    );
+    emitNotification(booking.guestId, rejectNotif);
 
     res.status(200).json(createSuccessResponse(updated, "Booking rejected"));
+
+    // Send rejection email in background
+    setImmediate(async () => {
+      console.log(`[EMAIL DEBUG] Rejection flow started for guest: ${booking.guest.email}`);
+      console.log(`[EMAIL DEBUG] Guest name: ${booking.guest.name}`);
+      console.log(`[EMAIL DEBUG] Listing title: ${booking.listing.title}`);
+
+      try {
+        const emailHtml = bookingRejectedEmail(
+          booking.guest.name,
+          booking.listing.title
+        );
+
+        console.log(`[EMAIL DEBUG] Sending rejection email now...`);
+
+        await sendEmail(
+          booking.guest.email,
+          "Booking Request Rejected",
+          emailHtml
+        );
+
+        console.log(`[EMAIL SUCCESS] Rejection email sent to ${booking.guest.email}`);
+      } catch (error: any) {
+        console.error("[EMAIL ERROR] Rejection email failed:");
+        console.error("Error message:", error?.message);
+        console.error("Full error:", error);
+      }
+    });
   } catch (error) {
     if (error instanceof AppError) throw error;
     console.error(error);
@@ -498,12 +536,13 @@ export const payBooking = async (req: AuthRequest, res: Response): Promise<void>
     });
 
     // Notify host
-    await createNotification({
+    const paymentNotif = await createNotification({
       userId: booking.listing.hostId,
       title: "Payment Received",
       message: `Payment received for booking of ${booking.listing.title}`,
       type: "PAYMENT",
     });
+    emitNotification(booking.listing.hostId, paymentNotif);
 
     // Send confirmation email to guest
     await sendEmail(
