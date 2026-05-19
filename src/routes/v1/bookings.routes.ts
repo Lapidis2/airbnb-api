@@ -223,7 +223,7 @@ route.post("/:id/confirm", authenticate, confirmBooking as any);
  *         description: Booking ID
  *     responses:
  *       200:
- *         description: Booking cancelled successfully
+ *         description: Booking cancelled successfully!
  *       404:
  *         description: Booking not found
  */
