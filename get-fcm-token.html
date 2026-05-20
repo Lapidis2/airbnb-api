@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Get FCM Token - Airbnb API Testing</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 40px; 
+      max-width: 900px; 
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #FF385C; }
+    h2 { color: #333; margin-top: 30px; }
+    button { 
+      padding: 12px 24px; 
+      font-size: 16px; 
+      cursor: pointer;
+      background: #FF385C;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    button:hover { background: #E31C5F; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #token { 
+      margin-top: 20px; 
+      padding: 20px; 
+      background: #f9f9f9; 
+      border-radius: 8px; 
+      word-break: break-all;
+      border: 1px solid #ddd;
+    }
+    .error { color: #d32f2f; background: #ffebee; padding: 15px; border-radius: 5px; }
+    .success { color: #388e3c; background: #e8f5e9; padding: 15px; border-radius: 5px; }
+    .info { color: #1976d2; background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    pre { 
+      background: #263238; 
+      color: #aed581;
+      padding: 15px; 
+      overflow-x: auto;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+    .step { 
+      background: #fff3e0; 
+      padding: 15px; 
+      margin: 15px 0; 
+      border-left: 4px solid #ff9800;
+      border-radius: 4px;
+    }
+    code { 
+      background: #f5f5f5; 
+      padding: 2px 6px; 
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔔 FCM Token Generator</h1>
+    <p>Generate a Firebase Cloud Messaging token to test push notifications for your Airbnb API.</p>
+
+    <div class="info">
+      <strong>⚠️ Before you start:</strong> You need Firebase Web configuration values from your Firebase Console.
+    </div>
+
+    <h2>📋 Step 1: Get Your Firebase Config</h2>
+    <div class="step">
+      <ol>
+        <li>Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a></li>
+        <li>Select your project</li>
+        <li>Click the gear icon ⚙️ → <strong>Project Settings</strong></li>
+        <li>Scroll to <strong>"Your apps"</strong> section</li>
+        <li>Click the <strong>Web icon (&lt;/&gt;)</strong> or select existing web app</li>
+        <li>Copy the <code>firebaseConfig</code> object</li>
+      </ol>
+    </div>
+
+    <h2>📋 Step 2: Get Your VAPID Key</h2>
+    <div class="step">
+      <ol>
+        <li>Same page → Click <strong>"Cloud Messaging"</strong> tab</li>
+        <li>Scroll to <strong>"Web Push certificates"</strong></li>
+        <li>Click <strong>"Generate key pair"</strong> if not exists</li>
+        <li>Copy the <strong>Key pair</strong> value (starts with "B...")</li>
+      </ol>
+    </div>
+
+    <h2>📋 Step 3: Update Configuration Below</h2>
+    <p>Open this file in a text editor and replace the values in the <code>&lt;script&gt;</code> section (lines 150-157 and line 163):</p>
+    
+    <pre>const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",           // ← Replace this
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abc123"
+};
+
+const VAPID_KEY = 'YOUR_VAPID_KEY';  // ← Replace this</pre>
+
+    <h2>📋 Step 4: Generate Token</h2>
+    <button id="requestPermission">🔔 Generate FCM Token</button>
+    <div id="token"></div>
+
+    <h2>📋 Step 5: Register Token with Backend</h2>
+    <div class="step">
+      <p>Once you have the token, register it with your backend:</p>
+      <pre>POST http://localhost:3000/api/v1/push-tokens
+Authorization: Bearer YOUR_AUTH_TOKEN
+Content-Type: application/json
+
+{
+  "token": "PASTE_YOUR_FCM_TOKEN_HERE"
+}</pre>
+    </div>
+
+    <h2>📋 Step 6: Test Notification</h2>
+    <div class="step">
+      <p>Send a test notification:</p>
+      <pre>POST http://localhost:3000/api/v1/push-tokens/test
+Authorization: Bearer YOUR_AUTH_TOKEN</pre>
+      <p>You should receive a notification in this browser! 🎉</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
+
+    // 👇 REPLACE WITH YOUR FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // 👇 REPLACE WITH YOUR VAPID KEY
+    const VAPID_KEY = 'YOUR_VAPID_KEY';
+
+    // Check if config is updated
+    const isConfigured = firebaseConfig.apiKey !== 'YOUR_API_KEY' && VAPID_KEY !== 'YOUR_VAPID_KEY';
+
+    const tokenDiv = document.getElementById('token');
+    const button = document.getElementById('requestPermission');
+
+    if (!isConfigured) {
+      tokenDiv.innerHTML = '<p class="error">⚠️ Please update the Firebase configuration in this HTML file first! See steps above.</p>';
+      button.disabled = true;
+    }
+
+    let app, messaging;
+
+    try {
+      if (isConfigured) {
+        app = initializeApp(firebaseConfig);
+        messaging = getMessaging(app);
+      }
+    } catch (error) {
+      tokenDiv.innerHTML = `<p class="error">❌ Firebase initialization failed: ${error.message}</p>`;
+      button.disabled = true;
+    }
+
+    button.addEventListener('click', async () => {
+      if (!isConfigured) {
+        alert('Please update Firebase configuration first!');
+        return;
+      }
+
+      try {
+        tokenDiv.innerHTML = '<p>⏳ Requesting notification permission...</p>';
+        
+        const permission = await Notification.requestPermission();
+        
+        if (permission === 'granted') {
+          tokenDiv.innerHTML = '<p>⏳ Generating FCM token...</p>';
+          
+          const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+          
+          tokenDiv.innerHTML = `
+            <p class="success">✅ FCM Token Generated Successfully!</p>
+            <p><strong>Your Token:</strong></p>
+            <pre style="background: #263238; color: #aed581; padding: 15px; border-radius: 5px; overflow-x: auto;">${token}</pre>
+            <button onclick="navigator.clipboard.writeText('${token}').then(() => alert('Token copied to clipboard! ✓'))">📋 Copy Token</button>
+            <p style="margin-top: 20px;"><strong>Next:</strong> Use this token to register with your backend (see Step 5 above)</p>
+          `;
+          
+          console.log('FCM Token:', token);
+        } else if (permission === 'denied') {
+          tokenDiv.innerHTML = '<p class="error">❌ Notification permission denied. Please enable notifications in your browser settings and try again.</p>';
+        } else {
+          tokenDiv.innerHTML = '<p class="error">❌ Notification permission dismissed.</p>';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        tokenDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>
+          <p>Common issues:</p>
+          <ul>
+            <li>Invalid VAPID key</li>
+            <li>Invalid Firebase config</li>
+            <li>Browser doesn't support notifications</li>
+            <li>Not using HTTPS (use localhost for testing)</li>
+          </ul>`;
+      }
+    });
+  </script>
+</body>
+</html>

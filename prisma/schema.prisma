@@ -62,6 +62,7 @@ model User {
   avatar    String?
   avatarPublicId    String?
   bio       String?
+  pushTokens String[]
   resetToken String?
   resetTokenExpiry DateTime?
   password  String   @default("123")

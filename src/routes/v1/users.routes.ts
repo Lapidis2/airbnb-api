@@ -8,6 +8,7 @@ import {
   updateUser,
   getUserBookings,
 } from "../../controllers/users.controller";
+import { registerPushToken } from "../../controllers/pushToken.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { getUserStatistics } from "../../controllers/statistics.controller";
 
@@ -156,5 +157,46 @@ route.get("/:id/bookings", authenticate, getUserBookings as any);
  *                   type: number
  */
 route.get("/statistics", authenticate, getUserStatistics as any);
+
+/**
+ * @swagger
+ * /api/v1/users/push-token:
+ *   post:
+ *     summary: Register FCM push token (for React Native)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token]
+ *             properties:
+ *               token:
+ *                 type: string
+ *               platform:
+ *                 type: string
+ *               provider:
+ *                 type: string
+ *               deviceName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token registered successfully
+ */
+route.post("/push-token", authenticate, registerPushToken as any);
+
+/**
+ * @swagger
+ * /api/v1/users/push-token:
+ *   put:
+ *     summary: Refresh/update FCM push token
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+route.put("/push-token", authenticate, registerPushToken as any);
 
 export default route;
