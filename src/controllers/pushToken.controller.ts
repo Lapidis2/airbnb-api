@@ -114,22 +114,22 @@ export const sendTestNotification = async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    const result = await NotificationService.sendNotification(
+    const success = await NotificationService.sendNotification(
       userId,
-      "Test Notification",
-      `Hello ${user.name}! Your push notifications are working! 🎉`
+      {
+        title: "Test Notification",
+        body: `Hello ${user.name}! Your push notifications are working! 🎉`,
+      }
     );
 
-    if (result.successCount > 0) {
+    if (success) {
       res.json({ 
         message: "Test notification sent successfully", 
-        sentTo: result.successCount,
         totalTokens: user.pushTokens.length
       });
     } else {
       res.status(400).json({ 
-        message: "Failed to send notification", 
-        error: result.errors && result.errors.length > 0 ? result.errors[0] : "Invalid FCM token",
+        message: "Failed to send notification",
         hint: "Make sure you registered a valid FCM token from a real device/browser. Use get-fcm-token.html to generate one."
       });
     }

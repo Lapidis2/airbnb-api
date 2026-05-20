@@ -114,7 +114,7 @@ export class NotificationService {
           console.error(`[NOTIFICATION] Failed to send to token ${idx}:`, resp.error?.message);
           if (resp.error?.code === "messaging/invalid-registration-token" ||
               resp.error?.code === "messaging/registration-token-not-registered") {
-            this.removeInvalidToken(userId, tokens[idx]);
+            this.removeInvalidToken(userId, tokens[idx]!);
           }
         }
       });
