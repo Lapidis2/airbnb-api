@@ -7,6 +7,7 @@ export const registerPushToken = async (req: AuthRequest, res: Response): Promis
   try {
     const { token } = req.body;
     const userId = req.userId as string;
+    console.log(`[PUSH TOKEN] Register attempt - userId: ${userId}, hasToken: ${!!token}`);
 
     if (!token) {
       res.status(400).json({ message: "Push token is required" });
