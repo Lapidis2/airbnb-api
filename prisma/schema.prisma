@@ -72,6 +72,8 @@ model User {
   listings  Listing[]
   bookings  Booking[]
   notifications Notification[]
+  sentMessages Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
   @@index([name])
   @@index([role])
   reviews Review[]
@@ -149,5 +151,22 @@ model Notification {
 
   @@index([userId])
   @@index([isRead])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId   String
+
+  recipient  User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([createdAt])
 }
 

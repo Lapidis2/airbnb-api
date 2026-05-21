@@ -163,13 +163,13 @@ export class NotificationService {
     recipientId: string,
     senderName: string,
     messagePreview: string,
-    threadId: string
+    partnerId: string
   ): Promise<void> {
     await this.sendNotification(recipientId, {
       title: `Message from ${senderName}`,
       body: messagePreview.substring(0, 100),
       screen: "MessageThread",
-      params: { threadId },
+      params: { threadId: partnerId },
       channel: "messages",
     });
   }
