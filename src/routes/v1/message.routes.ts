@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
-import { sendMessage, getConversations, getMessageThread, markAsRead, replyToMessage } from "../../controllers/message.controller";
+import { sendMessage, getConversations, getMessageThread, markAsRead, replyToMessage, markThreadAsRead } from "../../controllers/message.controller";
 
 const router = Router();
 
@@ -112,6 +112,31 @@ router.get("/thread/:partnerId", authenticate, getMessageThread as any);
  *         description: User not found
  */
 router.post("/thread/:partnerId", authenticate, replyToMessage as any);
+
+/**
+ * @swagger
+ * /api/v1/messages/thread/{partnerId}/read:
+ *   patch:
+ *     summary: Mark entire thread/conversation as read
+ *     tags: [Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: partnerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Thread marked as read
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ */
+router.patch("/thread/:partnerId/read", authenticate, markThreadAsRead as any);
 
 /**
  * @swagger

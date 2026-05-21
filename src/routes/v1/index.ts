@@ -10,6 +10,7 @@ import statisticsRouter from "./statistics.routes.js";
 import adminRouter from "./admin.routes.js";
 import pushTokenRouter from "./pushToken.routes.js";
 import messageRouter from "./message.routes.js";
+import wishlistRouter from "./wishlists.routes.js";
 
 const v1Router = Router();
 
@@ -24,5 +25,6 @@ v1Router.use("/admin", adminRouter);
 v1Router.use("/notifications", notificationsRouter);
 v1Router.use("/push-tokens", pushTokenRouter);
 v1Router.use("/messages", messageRouter);
+v1Router.use("/wishlists", wishlistRouter);
 
 export default v1Router;

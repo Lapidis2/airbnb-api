@@ -74,6 +74,7 @@ model User {
   notifications Notification[]
   sentMessages Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  wishlists Wishlist[]
   @@index([name])
   @@index([role])
   reviews Review[]
@@ -102,6 +103,7 @@ model Listing {
   @@index([type])
   @@index([pricePerNight])
   reviews Review[]
+  wishlistItems WishlistItem[]
 }
 
 model Booking {
@@ -168,5 +170,35 @@ model Message {
   @@index([senderId])
   @@index([recipientId])
   @@index([createdAt])
+}
+
+model Wishlist {
+  id        String         @id @default(uuid())
+  name      String         @default("Favorites")
+  createdAt DateTime       @default(now())
+  updatedAt DateTime?      @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items WishlistItem[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([wishlistId, listingId])
+  @@index([wishlistId])
+  @@index([listingId])
 }
 

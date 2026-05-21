@@ -214,6 +214,32 @@ export const getMessageThread = async (req: AuthRequest, res: Response): Promise
   }
 };
 
+export const markThreadAsRead = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId!;
+    const { partnerId } = req.params;
+
+    if (!partnerId) {
+      throw new AppError("partnerId is required", 400);
+    }
+
+    const result = await prisma.message.updateMany({
+      where: {
+        senderId: partnerId,
+        recipientId: userId,
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+
+    res.json(createSuccessResponse({ updated: result.count }, "Thread marked as read"));
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error(error);
+    throw new AppError("Failed to mark thread as read", 500);
+  }
+};
+
 export const markAsRead = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
