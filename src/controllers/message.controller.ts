@@ -41,7 +41,6 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
 
     res.status(201).json(createSuccessResponse(message, "Message sent successfully"));
 
-    // Send push notification in background
     setImmediate(async () => {
       try {
         await NotificationService.sendMessageNotification(
@@ -58,6 +57,62 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
     if (error instanceof AppError) throw error;
     console.error(error);
     throw new AppError("Failed to send message", 500);
+  }
+};
+
+export const replyToMessage = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { partnerId } = req.params;
+    const { content } = req.body;
+    const senderId = req.userId!;
+
+    if (!partnerId || !content) {
+      throw new AppError("partnerId and content are required", 400);
+    }
+
+    if (partnerId === senderId) {
+      throw new AppError("Cannot send message to yourself", 400);
+    }
+
+    const [sender, recipient] = await Promise.all([
+      prisma.user.findUnique({ where: { id: senderId }, select: { id: true, name: true } }),
+      prisma.user.findUnique({ where: { id: partnerId }, select: { id: true, name: true } }),
+    ]);
+
+    if (!sender || !recipient) {
+      throw new AppError("User not found", 404);
+    }
+
+    const message = await prisma.message.create({
+      data: {
+        content,
+        senderId,
+        recipientId: partnerId,
+      },
+      include: {
+        sender: { select: { id: true, name: true, avatar: true } },
+        recipient: { select: { id: true, name: true, avatar: true } },
+      },
+    });
+
+    res.status(201).json(createSuccessResponse(message, "Reply sent successfully"));
+
+    setImmediate(async () => {
+      try {
+        await NotificationService.sendMessageNotification(
+          partnerId,
+          sender.name,
+          content,
+          senderId
+        );
+      } catch (error) {
+        console.error("[MESSAGE] Push notification failed:", error);
+      }
+    });
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error(error);
+    throw new AppError("Failed to send reply", 500);
   }
 };
 

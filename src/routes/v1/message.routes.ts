@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
-import { sendMessage, getConversations, getMessageThread, markAsRead } from "../../controllers/message.controller";
+import { sendMessage, getConversations, getMessageThread, markAsRead, replyToMessage } from "../../controllers/message.controller";
 
 const router = Router();
 
@@ -75,6 +75,43 @@ router.get("/conversations", authenticate, getConversations as any);
  *         description: User not found
  */
 router.get("/thread/:partnerId", authenticate, getMessageThread as any);
+
+/**
+ * @swagger
+ * /api/v1/messages/thread/{partnerId}:
+ *   post:
+ *     summary: Reply to a user (send message in thread)
+ *     tags: [Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: partnerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [content]
+ *             properties:
+ *               content:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Reply sent successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+router.post("/thread/:partnerId", authenticate, replyToMessage as any);
 
 /**
  * @swagger
